@@ -15,6 +15,13 @@
       "when": 1784922049191,
       "tag": "0001_spicy_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784923178983,
+      "tag": "0002_unique_tomas",
+      "breakpoints": true
     }
   ]
 }

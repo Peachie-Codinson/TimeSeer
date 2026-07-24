@@ -3,10 +3,19 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { errorHandler } from "./middleware/errors.js";
 import { requireTrustedOrigin } from "./middleware/csrf.js";
+import { areasRoutes } from "./modules/areas/routes.js";
 import { authRoutes } from "./modules/auth/routes.js";
+import { calendarRoutes, eventsRoutes } from "./modules/calendar/routes.js";
+import { dashboardRoutes } from "./modules/dashboard/routes.js";
 import { healthRoutes } from "./modules/health/routes.js";
 
-const api = new Hono().route("/health", healthRoutes).route("/auth", authRoutes);
+const api = new Hono()
+  .route("/health", healthRoutes)
+  .route("/auth", authRoutes)
+  .route("/dashboard", dashboardRoutes)
+  .route("/calendar", calendarRoutes)
+  .route("/events", eventsRoutes)
+  .route("/areas", areasRoutes);
 
 const app = new Hono();
 

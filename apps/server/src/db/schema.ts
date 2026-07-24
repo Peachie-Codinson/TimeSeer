@@ -129,17 +129,21 @@ export const events = sqliteTable("events", {
   ...timestamps,
 });
 
-export const eventExceptions = sqliteTable("event_exceptions", {
-  id: id(),
-  eventId: text("event_id")
-    .notNull()
-    .references(() => events.id),
-  originalStart: integer("original_start").notNull(),
-  kind: text("kind", { enum: ["cancelled", "moved", "modified"] }).notNull(),
-  replacementStart: integer("replacement_start"),
-  replacementEnd: integer("replacement_end"),
-  overrideJson: text("override_json"),
-});
+export const eventExceptions = sqliteTable(
+  "event_exceptions",
+  {
+    id: id(),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id),
+    originalStart: integer("original_start").notNull(),
+    kind: text("kind", { enum: ["cancelled", "moved", "modified"] }).notNull(),
+    replacementStart: integer("replacement_start"),
+    replacementEnd: integer("replacement_end"),
+    overrideJson: text("override_json"),
+  },
+  (table) => [uniqueIndex("event_exceptions_event_original_start_unique").on(table.eventId, table.originalStart)],
+);
 
 // --- 10.6 Work Sessions -------------------------------------------------------
 

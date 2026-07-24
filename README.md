@@ -6,7 +6,8 @@ architecture across all phases.
 
 ## Status
 
-This repository currently implements **Stage 1: Foundation** and **Stage 2: Minimal Authentication**:
+This repository currently implements **Stage 1: Foundation**, **Stage 2: Minimal
+Authentication**, and **Stage 3: Combined Dashboard and Calendar**:
 
 - pnpm workspace (`apps/server`, `apps/web`)
 - Hono API server on Node, with `/api/v1/health/live` and `/api/v1/health/ready`
@@ -21,10 +22,22 @@ This repository currently implements **Stage 1: Foundation** and **Stage 2: Mini
   cookies, login throttling/lockout, session listing and revocation, password-change session
   invalidation, and origin validation on mutating API requests
 - A `reset-owner` CLI script for out-of-band password resets
+- Areas (courses/projects/etc.) with CRUD, used to color-code calendar events
+- Fixed Events: full CRUD with optimistic-concurrency versioning, RRULE-based recurrence
+  (via `rrule`) with per-occurrence move/cancel exceptions, and a `GET /api/v1/calendar`
+  range-query endpoint that expands recurrence and applies exceptions server-side
+- The combined landing page: mini-calendar + areas nav on the left, a Google Calendar-style
+  view (month/week/day/agenda, current-time line, working-hour highlighting, drag, resize,
+  click/drag-to-create, quick-create popover, full editor, keyboard-safe delete with
+  occurrence-vs-series confirmation, undo-after-move toast, remembered view/date) in the
+  center, and a current-task side panel on the right sourced from `GET /api/v1/dashboard`
+- The task panel's Now/In Progress/Urgent/Active Next sections and the quota summary render
+  empty-state placeholders for now — the dashboard endpoint already returns their real shape,
+  they just have no data until the task board (Stage 4) and quotas (Stage 5) exist
 
-Not yet implemented: the combined dashboard, task board, calendar UX, work sessions, archive
-flushing, quotas, the scheduling engine, notifications, the Tauri desktop shell, and the Canvas
-integration stub. These land in later stages.
+Not yet implemented: the task board, work sessions, archive flushing, quotas, the scheduling
+engine, notifications, the Tauri desktop shell, and the Canvas integration stub. These land in
+later stages.
 
 ## Development
 

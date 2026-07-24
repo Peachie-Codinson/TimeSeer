@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `event_exceptions_event_original_start_unique` ON `event_exceptions` (`event_id`,`original_start`);

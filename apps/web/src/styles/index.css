@@ -13,3 +13,39 @@
     @apply rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:border-slate-500 hover:text-white disabled:opacity-50;
   }
 }
+
+/* FullCalendar ships light-theme styles; override for the dark UI. */
+.fc {
+  --fc-border-color: #1e293b;
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: #0f172a;
+  --fc-list-event-hover-bg-color: #1e293b;
+  --fc-today-bg-color: rgba(148, 163, 184, 0.08);
+  --fc-now-indicator-color: #f87171;
+  color: #e2e8f0;
+}
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number,
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-list-day-cushion {
+  color: #94a3b8;
+}
+.fc .fc-list-event-title,
+.fc .fc-list-event-time {
+  color: #cbd5e1;
+}
+.fc .fc-more-link {
+  color: #93c5fd;
+}
+.fc-theme-standard .fc-popover {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+.fc-theme-standard .fc-popover-header {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+.fc .fc-timegrid-slot-label,
+.fc .fc-timegrid-axis {
+  color: #64748b;
+}
