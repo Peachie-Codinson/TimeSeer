@@ -34,6 +34,10 @@ export function DashboardPage() {
           </div>
         </div>
 
+        <Link to="/tasks" className="btn-secondary text-center">
+          Task board
+        </Link>
+
         <MiniCalendar
           selectedDate={selectedDate}
           onSelectDate={(date) => {

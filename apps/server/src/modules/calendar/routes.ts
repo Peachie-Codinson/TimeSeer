@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireSession } from "../../middleware/auth.js";
+import { listWorkSessionsInRange } from "../work-sessions/service.js";
 import {
   ConflictError,
   NotFoundError,
@@ -46,7 +47,11 @@ export const calendarRoutes = new Hono()
     zValidator("query", z.object({ start: z.coerce.number().int(), end: z.coerce.number().int() })),
     (c) => {
       const { start, end } = c.req.valid("query");
-      return c.json({ events: expandEventsInRange(start, end), workSessions: [], deadlines: [] });
+      return c.json({
+        events: expandEventsInRange(start, end),
+        workSessions: listWorkSessionsInRange(start, end),
+        deadlines: [],
+      });
     },
   );
 

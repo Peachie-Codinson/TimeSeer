@@ -3,9 +3,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireSession } from "../../middleware/auth.js";
 import { expandEventsInRange } from "../calendar/service.js";
+import { getDashboardTaskLists } from "../tasks/service.js";
+import { listWorkSessionsInRange } from "../work-sessions/service.js";
 
-// Tasks (Stage 4) and quotas (Stage 5) don't exist yet; the shape here matches
-// the eventual response so the web dashboard doesn't need to change later.
+// Quotas (Stage 5) don't exist yet; "now" needs a Stage 5+ work-session lifecycle
+// (currently sessions only ever reach "planned"), so it stays empty until then.
 export const dashboardRoutes = new Hono()
   .use("*", requireSession)
   .get(
@@ -21,20 +23,22 @@ export const dashboardRoutes = new Hono()
     ),
     (c) => {
       const { rangeStart, rangeEnd } = c.req.valid("query");
+      const taskLists = getDashboardTaskLists(Date.now());
 
-      // Explicitly typed so the empty placeholder arrays don't infer as
-      // `never[]` (which would poison the Hono RPC client's response type).
+      // "now" is explicitly typed as never[] rather than left implicit, so it
+      // doesn't infer `never[]` in a way that poisons the whole response's
+      // type in the Hono RPC client (as an empty array literal would).
       const response: {
         calendar: {
           events: ReturnType<typeof expandEventsInRange>;
-          workSessions: unknown[];
+          workSessions: ReturnType<typeof listWorkSessionsInRange>;
           deadlines: unknown[];
         };
         tasks: {
-          now: unknown[];
-          inProgress: unknown[];
-          urgent: unknown[];
-          activeNext: unknown[];
+          now: never[];
+          inProgress: typeof taskLists.inProgress;
+          urgent: typeof taskLists.urgent;
+          activeNext: typeof taskLists.activeNext;
         };
         quotaSummary: {
           completedMinutes: number;
@@ -45,14 +49,12 @@ export const dashboardRoutes = new Hono()
       } = {
         calendar: {
           events: expandEventsInRange(rangeStart, rangeEnd),
-          workSessions: [],
+          workSessions: listWorkSessionsInRange(rangeStart, rangeEnd),
           deadlines: [],
         },
         tasks: {
           now: [],
-          inProgress: [],
-          urgent: [],
-          activeNext: [],
+          ...taskLists,
         },
         quotaSummary: {
           completedMinutes: 0,

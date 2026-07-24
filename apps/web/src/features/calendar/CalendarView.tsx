@@ -3,11 +3,13 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import type { EventClickArg, EventDropArg } from "@fullcalendar/core";
-import type { EventResizeDoneArg } from "@fullcalendar/interaction";
+import type { DropArg, EventResizeDoneArg } from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { fetchAreas } from "../areas/api";
+import { fetchTasks } from "../tasks/api";
+import { createWorkSession } from "../work-sessions/api";
 import { createEvent, fetchCalendarRange, fetchEvent, moveOccurrence, updateEvent } from "./api";
 import { EventDetailsPopover } from "./EventDetailsPopover";
 import type { EventEditorInitial } from "./EventEditorModal";
@@ -46,6 +48,9 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
     const { data: areas = [] } = useQuery({ queryKey: ["areas"], queryFn: fetchAreas });
     const areaById = useMemo(() => new Map(areas.map((a) => [a.id, a])), [areas]);
 
+    const { data: allTasks = [] } = useQuery({ queryKey: ["tasks"], queryFn: fetchTasks });
+    const taskTitleById = useMemo(() => new Map(allTasks.map((t) => [t.id, t.title])), [allTasks]);
+
     const calendarQueryKey = ["calendar", range?.start, range?.end];
     const { data } = useQuery({
       queryKey: calendarQueryKey,
@@ -66,7 +71,7 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
       return all.filter((e) => e.title.toLowerCase().includes(q));
     }, [data, search]);
 
-    const fcEvents = useMemo(
+    const eventItems = useMemo(
       () =>
         occurrences.map((occ) => {
           const color = (occ.areaId && areaById.get(occ.areaId)?.color) || DEFAULT_COLOR;
@@ -78,11 +83,34 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
             allDay: occ.allDay,
             backgroundColor: color,
             borderColor: color,
-            extendedProps: { occurrence: occ },
+            extendedProps: { kind: "event" as const, occurrence: occ },
           };
         }),
       [occurrences, areaById],
     );
+
+    // Work sessions render as outlined chips (spec 7.4) and aren't yet interactive —
+    // starting/completing/resizing a session is Stage 5's work-session lifecycle.
+    const workSessionItems = useMemo(
+      () =>
+        (data?.workSessions ?? []).map((ws) => ({
+          id: `ws:${ws.id}`,
+          title: `▸ ${taskTitleById.get(ws.taskId) ?? "Work session"}`,
+          start: new Date(ws.startsAt).toISOString(),
+          end: new Date(ws.endsAt).toISOString(),
+          backgroundColor: "transparent",
+          borderColor: DEFAULT_COLOR,
+          textColor: "#cbd5e1",
+          editable: false,
+          extendedProps: { kind: "workSession" as const },
+        })),
+      [data, taskTitleById],
+    );
+
+    const fcEvents = useMemo(() => [...eventItems, ...workSessionItems], [eventItems, workSessionItems]);
+
+    const isWorkSession = (arg: EventClickArg | EventDropArg | EventResizeDoneArg) =>
+      arg.event.extendedProps.kind === "workSession";
 
     const findOccurrence = (arg: EventClickArg | EventDropArg | EventResizeDoneArg): EventOccurrence =>
       arg.event.extendedProps.occurrence as EventOccurrence;
@@ -197,8 +225,12 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
               setQuickCreateDraft({ start: arg.start.getTime(), end: arg.end.getTime() });
               fcRef.current?.getApi().unselect();
             }}
-            eventClick={(arg) => setDetailsOccurrence(findOccurrence(arg))}
+            eventClick={(arg) => {
+              if (isWorkSession(arg)) return;
+              setDetailsOccurrence(findOccurrence(arg));
+            }}
             eventDrop={(arg) => {
+              if (isWorkSession(arg)) return;
               const occ = findOccurrence(arg);
               const newStart = arg.event.start!.getTime();
               const newEnd = (arg.event.end ?? arg.event.start!).getTime();
@@ -207,12 +239,24 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
               void handleMove(occ, newStart, newEnd, prevStart, prevEnd, arg.revert);
             }}
             eventResize={(arg) => {
+              if (isWorkSession(arg)) return;
               const occ = findOccurrence(arg);
               const newStart = arg.event.start!.getTime();
               const newEnd = (arg.event.end ?? arg.event.start!).getTime();
               const prevStart = arg.oldEvent.start!.getTime();
               const prevEnd = (arg.oldEvent.end ?? arg.oldEvent.start!).getTime();
               void handleMove(occ, newStart, newEnd, prevStart, prevEnd, arg.revert);
+            }}
+            drop={(arg: DropArg) => {
+              const taskId = arg.draggedEl.dataset.taskId;
+              if (!taskId) return;
+              const durationMinutes = Number(arg.draggedEl.dataset.durationMinutes) || 30;
+              const startsAt = arg.date.getTime();
+              const endsAt = startsAt + durationMinutes * 60_000;
+              void createWorkSession({ taskId, startsAt, endsAt }).then(() => {
+                refetchCalendar();
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+              });
             }}
           />
         </div>

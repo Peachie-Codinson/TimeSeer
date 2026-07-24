@@ -1,5 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { Draggable } from "@fullcalendar/interaction";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
+import { PanelTaskCard } from "../tasks/PanelTaskCard";
+import { returnToActive, snoozeTask, startTask } from "../tasks/api";
+import type { Task } from "../tasks/types";
 import { fetchDashboard } from "./api";
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function todayRange() {
   const now = new Date();
@@ -9,7 +17,7 @@ function todayRange() {
   return { start: start.getTime(), end: end.getTime() };
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="border-b border-slate-800 px-4 py-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
@@ -19,6 +27,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function TaskPanel() {
+  const queryClient = useQueryClient();
   const { start, end } = todayRange();
   const { data } = useQuery({
     queryKey: ["dashboard", start, end],
@@ -27,8 +36,26 @@ export function TaskPanel() {
     refetchInterval: 30_000,
   });
 
+  const refetch = () => queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+
+  const draggableContainerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!draggableContainerRef.current) return;
+    const draggable = new Draggable(draggableContainerRef.current, {
+      itemSelector: ".planner-draggable-task",
+      eventData: (el) => ({
+        title: el.dataset.title,
+        duration: { minutes: Number(el.dataset.durationMinutes) || 30 },
+      }),
+    });
+    return () => draggable.destroy();
+  }, []);
+
   const tasks = data?.tasks;
   const quota = data?.quotaSummary;
+  const inProgress = (tasks?.inProgress ?? []) as unknown as Task[];
+  const urgent = (tasks?.urgent ?? []) as unknown as Task[];
+  const activeNext = (tasks?.activeNext ?? []) as unknown as Task[];
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -37,19 +64,67 @@ export function TaskPanel() {
       </Section>
 
       <Section title="In Progress">
-        {tasks?.inProgress.length ? null : <p className="text-sm text-slate-500">No tasks in progress.</p>}
+        {inProgress.length === 0 ? (
+          <p className="text-sm text-slate-500">No tasks in progress.</p>
+        ) : (
+          <div className="space-y-2">
+            {inProgress.map((task) => (
+              <PanelTaskCard
+                key={task.id}
+                task={task}
+                actions={[
+                  { label: "Return to Active", onClick: () => returnToActive(task.id, task.version).then(refetch) },
+                ]}
+              />
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section title="Urgent & Time-Gated">
-        {tasks?.urgent.length ? null : <p className="text-sm text-slate-500">Nothing urgent.</p>}
+        {urgent.length === 0 ? (
+          <p className="text-sm text-slate-500">Nothing urgent.</p>
+        ) : (
+          <div className="space-y-2">
+            {urgent.map((task) => (
+              <PanelTaskCard
+                key={task.id}
+                task={task}
+                actions={
+                  task.state === "active"
+                    ? [{ label: "Start", onClick: () => startTask(task.id, task.version).then(refetch) }]
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section title="Active Next">
-        {tasks?.activeNext.length ? null : (
-          <p className="text-sm text-slate-500">
-            The task board hasn&apos;t landed yet — this fills in once tasks exist.
-          </p>
-        )}
+        <div className="space-y-2" ref={draggableContainerRef}>
+          {activeNext.length === 0 ? (
+            <p className="text-sm text-slate-500">Nothing queued. Add a task from the board.</p>
+          ) : (
+            <>
+              <p className="text-[11px] text-slate-600">Drag a card onto the calendar to schedule it.</p>
+              {activeNext.map((task) => (
+                <PanelTaskCard
+                  key={task.id}
+                  task={task}
+                  draggable
+                  actions={[
+                    { label: "Start", onClick: () => startTask(task.id, task.version).then(refetch) },
+                    {
+                      label: "Snooze 1d",
+                      onClick: () => snoozeTask(task.id, task.version, Date.now() + ONE_DAY_MS).then(refetch),
+                    },
+                  ]}
+                />
+              ))}
+            </>
+          )}
+        </div>
       </Section>
 
       <Section title="Quota Summary">

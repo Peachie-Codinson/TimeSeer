@@ -7,7 +7,8 @@ architecture across all phases.
 ## Status
 
 This repository currently implements **Stage 1: Foundation**, **Stage 2: Minimal
-Authentication**, and **Stage 3: Combined Dashboard and Calendar**:
+Authentication**, **Stage 3: Combined Dashboard and Calendar**, and **Stage 4: Task
+Management**:
 
 - pnpm workspace (`apps/server`, `apps/web`)
 - Hono API server on Node, with `/api/v1/health/live` and `/api/v1/health/ready`
@@ -31,13 +32,24 @@ Authentication**, and **Stage 3: Combined Dashboard and Calendar**:
   click/drag-to-create, quick-create popover, full editor, keyboard-safe delete with
   occurrence-vs-series confirmation, undo-after-move toast, remembered view/date) in the
   center, and a current-task side panel on the right sourced from `GET /api/v1/dashboard`
-- The task panel's Now/In Progress/Urgent/Active Next sections and the quota summary render
-  empty-state placeholders for now — the dashboard endpoint already returns their real shape,
-  they just have no data until the task board (Stage 4) and quotas (Stage 5) exist
+- Tasks: full lifecycle (create with issue-number allocation, start, resolve, reopen, return-
+  to-active, snooze, block/unblock) with optimistic-concurrency versioning, plus board-drag
+  reordering using integer positions spaced by 1024 (renumbering a column only when a gap
+  closes, per spec 8.3)
+- The `/tasks` board (Active / In Progress / Resolved) with dnd-kit drag-and-drop within and
+  across columns, quick-add, a task detail drawer with the full edit form and lifecycle
+  actions, and condition badges (Blocked, Overdue, Due today, Time-gated, external source)
+- A minimal work-sessions slice (create only — the full start/complete/partial/skip lifecycle
+  is Stage 5) so task-to-calendar drag works: dragging an Active Next card from the dashboard
+  panel onto the calendar (via FullCalendar's external `Draggable`) creates a work session,
+  which renders as an outlined "Work Session" chip alongside Fixed Events
+- The dashboard's In Progress / Urgent & Time-Gated / Active Next sections now render real
+  task data from `GET /api/v1/dashboard`, with Start/Resolve/Return-to-Active/Snooze actions
+  wired to the API; quota summary and the "Now" section stay empty-state until quotas
+  (Stage 5) and a real work-session lifecycle exist
 
-Not yet implemented: the task board, work sessions, archive flushing, quotas, the scheduling
-engine, notifications, the Tauri desktop shell, and the Canvas integration stub. These land in
-later stages.
+Not yet implemented: archive flushing, quotas, the scheduling engine, notifications, the Tauri
+desktop shell, and the Canvas integration stub. These land in later stages.
 
 ## Development
 

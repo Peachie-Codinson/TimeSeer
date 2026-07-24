@@ -5,6 +5,7 @@ import { SessionsPage } from "./features/auth/SessionsPage";
 import { SetupPage } from "./features/auth/SetupPage";
 import { useAuthStatus } from "./features/auth/useAuthStatus";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { TaskBoardPage } from "./features/tasks/TaskBoardPage";
 
 function Centered({ children }: { children: ReactNode }) {
   return (
@@ -33,6 +34,14 @@ export function App() {
         element={
           <RequireAuth>
             <DashboardPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/tasks"
+        element={
+          <RequireAuth>
+            <TaskBoardPage />
           </RequireAuth>
         }
       />

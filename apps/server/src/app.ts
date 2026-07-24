@@ -8,6 +8,8 @@ import { authRoutes } from "./modules/auth/routes.js";
 import { calendarRoutes, eventsRoutes } from "./modules/calendar/routes.js";
 import { dashboardRoutes } from "./modules/dashboard/routes.js";
 import { healthRoutes } from "./modules/health/routes.js";
+import { boardRoutes, tasksRoutes } from "./modules/tasks/routes.js";
+import { workSessionsRoutes } from "./modules/work-sessions/routes.js";
 
 const api = new Hono()
   .route("/health", healthRoutes)
@@ -15,7 +17,10 @@ const api = new Hono()
   .route("/dashboard", dashboardRoutes)
   .route("/calendar", calendarRoutes)
   .route("/events", eventsRoutes)
-  .route("/areas", areasRoutes);
+  .route("/areas", areasRoutes)
+  .route("/tasks", tasksRoutes)
+  .route("/board", boardRoutes)
+  .route("/work-sessions", workSessionsRoutes);
 
 const app = new Hono();
 
