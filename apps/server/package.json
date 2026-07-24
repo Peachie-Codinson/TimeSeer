@@ -10,14 +10,13 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
-    "seed": "tsx src/db/seed.ts",
-    "backup": "tsx src/scripts/backup.ts",
-    "restore": "tsx src/scripts/restore.ts",
+    "create-setup-token": "tsx src/scripts/create-setup-token.ts",
     "reset-owner": "tsx src/scripts/reset-owner.ts",
     "test": "vitest run"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
+    "@hono/zod-validator": "^0.4.2",
     "@node-rs/argon2": "^2.0.2",
     "better-sqlite3": "^11.7.0",
     "drizzle-orm": "^0.38.3",

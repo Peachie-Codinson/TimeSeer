@@ -17,6 +17,8 @@ export const owners = sqliteTable("owners", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   timezone: text("timezone").notNull(),
+  failedLoginAttempts: integer("failed_login_attempts").notNull().default(0),
+  lockedUntil: integer("locked_until"),
   ...timestamps,
 });
 
@@ -29,6 +31,16 @@ export const sessions = sqliteTable("sessions", {
   lastSeenAt: integer("last_seen_at").notNull(),
   expiresAt: integer("expires_at").notNull(),
   revokedAt: integer("revoked_at"),
+});
+
+// A one-time token minted by the bootstrap script so the owner can claim
+// the singleton account before any password exists.
+export const setupTokens = sqliteTable("setup_tokens", {
+  id: id(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: integer("expires_at").notNull(),
+  consumedAt: integer("consumed_at"),
+  createdAt: integer("created_at").notNull(),
 });
 
 // --- 10.2 Areas ------------------------------------------------------------

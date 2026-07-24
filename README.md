@@ -6,20 +6,25 @@ architecture across all phases.
 
 ## Status
 
-This repository currently implements **Stage 1: Foundation**:
+This repository currently implements **Stage 1: Foundation** and **Stage 2: Minimal Authentication**:
 
 - pnpm workspace (`apps/server`, `apps/web`)
 - Hono API server on Node, with `/api/v1/health/live` and `/api/v1/health/ready`
 - SQLite via `better-sqlite3` + Drizzle ORM, with the core schema (owners, sessions, areas,
-  tasks, events, work sessions, quotas, archive, scheduled jobs) and WAL pragmas configured
+  tasks, events, work sessions, quotas, archive, scheduled jobs, setup tokens) and WAL
+  pragmas configured
 - React + Vite web app, served by the Node app in production, using the Hono RPC client for
   typed API calls and TanStack Query for server state
 - Docker Compose (`app` + `caddy`) and a Caddyfile for TLS termination
-- A `bootstrap.sh` script to build and start the stack
+- A `bootstrap.sh` script to build, start the stack, and print the one-time owner setup URL
+- Single-owner auth: one-time setup token claim, argon2 password hashing, long-lived session
+  cookies, login throttling/lockout, session listing and revocation, password-change session
+  invalidation, and origin validation on mutating API requests
+- A `reset-owner` CLI script for out-of-band password resets
 
-Not yet implemented: authentication, the combined dashboard, task board, calendar UX, work
-sessions, archive flushing, quotas, the scheduling engine, notifications, the Tauri desktop
-shell, and the Canvas integration stub. These land in later stages.
+Not yet implemented: the combined dashboard, task board, calendar UX, work sessions, archive
+flushing, quotas, the scheduling engine, notifications, the Tauri desktop shell, and the Canvas
+integration stub. These land in later stages.
 
 ## Development
 

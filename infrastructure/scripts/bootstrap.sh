@@ -22,6 +22,5 @@ until docker compose exec -T app node -e "fetch('http://localhost:3000/api/v1/he
   sleep 2
 done
 
-echo "Stack is up. Owner setup is bootstrapped on first run of the app;"
-echo "see server logs for the one-time setup URL:"
-echo "  docker compose logs app | grep setup"
+echo "Stack is up."
+docker compose exec -T app node dist/scripts/create-setup-token.js
