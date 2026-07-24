@@ -8,11 +8,17 @@ export function TaskCard({
   onClick,
   onStart,
   onResolve,
+  selectable,
+  selected,
+  onToggleSelect,
 }: {
   task: Task;
   onClick: () => void;
   onStart?: () => void;
   onResolve?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const badges = taskBadges(task);
@@ -26,10 +32,21 @@ export function TaskCard({
       onClick={onClick}
       className={`cursor-pointer rounded-md border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600 ${
         isDragging ? "opacity-40" : ""
-      }`}
+      } ${selected ? "ring-1 ring-emerald-500" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="font-medium text-slate-100">{task.title}</p>
+        <div className="flex items-start gap-2">
+          {selectable && (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={onToggleSelect}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1"
+            />
+          )}
+          <p className="font-medium text-slate-100">{task.title}</p>
+        </div>
         <span className="shrink-0 text-xs text-slate-600">#{task.issueNumber}</span>
       </div>
       {badges.length > 0 && (

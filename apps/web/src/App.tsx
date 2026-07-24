@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router";
+import { ArchivePage } from "./features/archive/ArchivePage";
 import { LoginPage } from "./features/auth/LoginPage";
 import { SessionsPage } from "./features/auth/SessionsPage";
 import { SetupPage } from "./features/auth/SetupPage";
@@ -42,6 +43,14 @@ export function App() {
         element={
           <RequireAuth>
             <TaskBoardPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/archive"
+        element={
+          <RequireAuth>
+            <ArchivePage />
           </RequireAuth>
         }
       />

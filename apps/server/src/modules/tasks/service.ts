@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "../../db/connection.js";
 import { activityLog, taskResolutions, tasks } from "../../db/schema.js";
+import { closeSessionsForResolvedTask } from "../work-sessions/service.js";
 
 export class ConflictError extends Error {}
 export class NotFoundError extends Error {}
@@ -313,6 +314,7 @@ export function resolveTask(taskId: string, expectedVersion: number) {
       .get();
 
     tx.insert(taskResolutions).values({ taskId, resolvedAt: now }).run();
+    closeSessionsForResolvedTask(tx, taskId, now);
     logActivity(tx, taskId, "resolved");
     return task;
   }, { behavior: "immediate" });

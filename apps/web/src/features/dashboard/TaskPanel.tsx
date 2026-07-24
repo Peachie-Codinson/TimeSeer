@@ -1,7 +1,8 @@
 import { Draggable } from "@fullcalendar/interaction";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createQuota, fetchQuotas, updateQuota } from "../quotas/api";
 import { PanelTaskCard } from "../tasks/PanelTaskCard";
 import { returnToActive, snoozeTask, startTask } from "../tasks/api";
 import type { Task } from "../tasks/types";
@@ -53,6 +54,7 @@ export function TaskPanel() {
 
   const tasks = data?.tasks;
   const quota = data?.quotaSummary;
+  const now = (tasks?.now ?? []) as unknown as Task[];
   const inProgress = (tasks?.inProgress ?? []) as unknown as Task[];
   const urgent = (tasks?.urgent ?? []) as unknown as Task[];
   const activeNext = (tasks?.activeNext ?? []) as unknown as Task[];
@@ -60,7 +62,15 @@ export function TaskPanel() {
   return (
     <div className="flex h-full flex-col overflow-y-auto">
       <Section title="Now">
-        <p className="text-sm text-slate-500">Nothing happening right now.</p>
+        {now.length === 0 ? (
+          <p className="text-sm text-slate-500">Nothing happening right now.</p>
+        ) : (
+          <div className="space-y-2">
+            {now.map((task) => (
+              <PanelTaskCard key={task.id} task={task} />
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section title="In Progress">
@@ -134,6 +144,7 @@ export function TaskPanel() {
           <Stat label="Target" value={quota?.targetMinutes ?? 0} />
           <Stat label="Remaining" value={quota?.remainingMinutes ?? 0} />
         </div>
+        <QuotaTargetEditor targetMinutes={quota?.targetMinutes ?? 0} />
       </Section>
     </div>
   );
@@ -144,6 +155,53 @@ function Stat({ label, value }: { label: string; value: number }) {
     <div className="rounded-md bg-slate-900 p-2">
       <p className="text-slate-500">{label}</p>
       <p className="text-slate-200">{value}m</p>
+    </div>
+  );
+}
+
+function QuotaTargetEditor({ targetMinutes }: { targetMinutes: number }) {
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(targetMinutes));
+
+  const save = async () => {
+    const minutes = Number(value);
+    if (!Number.isFinite(minutes) || minutes < 0) return;
+
+    const quotas = await fetchQuotas();
+    const existing = quotas.find((q) => q.scopeType === "global" && q.period === "daily");
+    if (existing) {
+      await updateQuota(existing.id, minutes);
+    } else {
+      await createQuota(minutes);
+    }
+    setEditing(false);
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+  };
+
+  if (!editing) {
+    return (
+      <button className="mt-2 text-[11px] text-slate-500 hover:text-slate-300" onClick={() => setEditing(true)}>
+        Edit daily target
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="input w-20 py-1 text-xs"
+      />
+      <span className="text-xs text-slate-500">min/day</span>
+      <button className="btn-secondary px-2 py-1 text-xs" onClick={() => void save()}>
+        Save
+      </button>
+      <button className="text-xs text-slate-500 hover:text-slate-300" onClick={() => setEditing(false)}>
+        Cancel
+      </button>
     </div>
   );
 }

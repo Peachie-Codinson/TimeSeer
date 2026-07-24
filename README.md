@@ -7,8 +7,8 @@ architecture across all phases.
 ## Status
 
 This repository currently implements **Stage 1: Foundation**, **Stage 2: Minimal
-Authentication**, **Stage 3: Combined Dashboard and Calendar**, and **Stage 4: Task
-Management**:
+Authentication**, **Stage 3: Combined Dashboard and Calendar**, **Stage 4: Task
+Management**, and **Stage 5: Sessions, Archive, and Quotas**:
 
 - pnpm workspace (`apps/server`, `apps/web`)
 - Hono API server on Node, with `/api/v1/health/live` and `/api/v1/health/ready`
@@ -39,17 +39,29 @@ Management**:
 - The `/tasks` board (Active / In Progress / Resolved) with dnd-kit drag-and-drop within and
   across columns, quick-add, a task detail drawer with the full edit form and lifecycle
   actions, and condition badges (Blocked, Overdue, Due today, Time-gated, external source)
-- A minimal work-sessions slice (create only — the full start/complete/partial/skip lifecycle
-  is Stage 5) so task-to-calendar drag works: dragging an Active Next card from the dashboard
-  panel onto the calendar (via FullCalendar's external `Draggable`) creates a work session,
-  which renders as an outlined "Work Session" chip alongside Fixed Events
-- The dashboard's In Progress / Urgent & Time-Gated / Active Next sections now render real
-  task data from `GET /api/v1/dashboard`, with Start/Resolve/Return-to-Active/Snooze actions
-  wired to the API; quota summary and the "Now" section stay empty-state until quotas
-  (Stage 5) and a real work-session lifecycle exist
+- The dashboard's In Progress / Urgent & Time-Gated / Active Next sections render real task
+  data from `GET /api/v1/dashboard`, with Start/Resolve/Return-to-Active/Snooze actions wired
+  to the API; task-to-calendar drag (via FullCalendar's external `Draggable`) creates a work
+  session that renders as an outlined "Work Session" chip alongside Fixed Events
+- Work sessions: full lifecycle (start, complete, partial completion with actual minutes,
+  skip, lock/unlock), with completion/partial updating the task's `remainingMinutes` and
+  `progressPercent`. Clicking a work session chip on the calendar opens quick actions.
+  Resolving a task closes its in-progress session and cancels still-planned future ones
+  (spec 13.5). The dashboard's "Now" section shows tasks with a currently in-progress session
+- Archive: age-based eligibility (resolved 7+ days, not archive-protected), a transactional
+  flush that creates an archive batch and moves tasks to `archived`, restore back to
+  `resolved`, and permanent deletion (cascading work sessions/resolutions). The `/tasks` board
+  supports multi-select on the Resolved column with "Immolate selected" (bypasses the age
+  check for explicitly chosen tasks) and "Immolate all" (age-eligible only); a `/archive`
+  route lists archived tasks with restore/permanent-delete. The persistent scheduled-job
+  runner that would fire this automatically on a weekly cron is Stage 6 infrastructure —
+  flushing is manually triggered via Immolate for now
+- Quotas: CRUD plus a compact daily summary (completed/scheduled/target/remaining minutes)
+  computed from today's work sessions, editable inline from the dashboard's Quota Summary
 
-Not yet implemented: archive flushing, quotas, the scheduling engine, notifications, the Tauri
-desktop shell, and the Canvas integration stub. These land in later stages.
+Not yet implemented: the scheduling engine, notifications, persistent scheduled jobs (the
+weekly auto-archive cron), the Tauri desktop shell, and the Canvas integration stub. These
+land in later stages.
 
 ## Development
 

@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router";
 import { fetchAreas } from "../areas/api";
+import { flushArchive } from "../archive/api";
 import { fetchBoard, moveTask, resolveTask, startTask } from "./api";
 import { Column } from "./Column";
 import { QuickAddForm } from "./QuickAddForm";
@@ -49,11 +50,30 @@ export function TaskBoardPage() {
   const [localBoard, setLocalBoard] = useState<Board | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedResolvedIds, setSelectedResolvedIds] = useState<Set<string>>(new Set());
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const current = localBoard ?? board ?? emptyBoard;
 
-  const refetchBoard = () => queryClient.invalidateQueries({ queryKey: ["board"] });
+  const refetchBoard = () => {
+    queryClient.invalidateQueries({ queryKey: ["board"] });
+    queryClient.invalidateQueries({ queryKey: ["archive"] });
+  };
+
+  const toggleResolvedSelection = (taskId: string) => {
+    setSelectedResolvedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  };
+
+  const immolate = async (taskIds?: string[]) => {
+    await flushArchive(taskIds);
+    setSelectedResolvedIds(new Set());
+    refetchBoard();
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     const all = [...current.active, ...current.inProgress, ...current.resolved];
@@ -123,6 +143,9 @@ export function TaskBoardPage() {
             ← Planner
           </Link>
           <h1 className="text-lg font-semibold">Tasks</h1>
+          <Link to="/archive" className="text-sm text-slate-400 hover:text-white">
+            Archive
+          </Link>
         </div>
         <div className="w-80">
           <QuickAddForm onCreated={refetchBoard} />
@@ -138,25 +161,45 @@ export function TaskBoardPage() {
       >
         <div className="grid flex-1 grid-cols-3 gap-4 overflow-hidden p-4">
           {COLUMNS.map((col) => (
-            <Column key={col.id} id={col.id} title={col.title} tasks={current[columnKey(col.id)]}>
-              {(task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={() => setSelectedTask(task)}
-                  onStart={
-                    task.state === "active"
-                      ? () => startTask(task.id, task.version).then(refetchBoard)
-                      : undefined
-                  }
-                  onResolve={
-                    task.state === "active" || task.state === "in_progress"
-                      ? () => resolveTask(task.id, task.version).then(refetchBoard)
-                      : undefined
-                  }
-                />
+            <div key={col.id} className="flex min-h-0 flex-1 flex-col">
+              {col.id === "resolved" && current.resolved.length > 0 && (
+                <div className="mb-2 flex items-center gap-2 text-xs">
+                  {selectedResolvedIds.size > 0 && (
+                    <button
+                      className="btn-secondary px-2 py-1 text-xs"
+                      onClick={() => void immolate(Array.from(selectedResolvedIds))}
+                    >
+                      Immolate selected ({selectedResolvedIds.size})
+                    </button>
+                  )}
+                  <button className="btn-secondary px-2 py-1 text-xs" onClick={() => void immolate()}>
+                    Immolate all eligible
+                  </button>
+                </div>
               )}
-            </Column>
+              <Column id={col.id} title={col.title} tasks={current[columnKey(col.id)]}>
+                {(task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onClick={() => setSelectedTask(task)}
+                    selectable={col.id === "resolved"}
+                    selected={selectedResolvedIds.has(task.id)}
+                    onToggleSelect={() => toggleResolvedSelection(task.id)}
+                    onStart={
+                      task.state === "active"
+                        ? () => startTask(task.id, task.version).then(refetchBoard)
+                        : undefined
+                    }
+                    onResolve={
+                      task.state === "active" || task.state === "in_progress"
+                        ? () => resolveTask(task.id, task.version).then(refetchBoard)
+                        : undefined
+                    }
+                  />
+                )}
+              </Column>
+            </div>
           ))}
         </div>
         <DragOverlay>{activeTask && <TaskCard task={activeTask} onClick={() => {}} />}</DragOverlay>

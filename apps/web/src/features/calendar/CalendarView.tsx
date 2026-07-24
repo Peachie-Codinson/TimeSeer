@@ -10,6 +10,8 @@ import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "reac
 import { fetchAreas } from "../areas/api";
 import { fetchTasks } from "../tasks/api";
 import { createWorkSession } from "../work-sessions/api";
+import type { WorkSession } from "../work-sessions/api";
+import { WorkSessionPopover } from "../work-sessions/WorkSessionPopover";
 import { createEvent, fetchCalendarRange, fetchEvent, moveOccurrence, updateEvent } from "./api";
 import { EventDetailsPopover } from "./EventDetailsPopover";
 import type { EventEditorInitial } from "./EventEditorModal";
@@ -44,6 +46,9 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
     const [detailsOccurrence, setDetailsOccurrence] = useState<EventOccurrence | null>(null);
     const [editorInitial, setEditorInitial] = useState<EventEditorInitial | null>(null);
     const [toast, setToast] = useState<ToastState | null>(null);
+    const [workSessionPopover, setWorkSessionPopover] = useState<{ session: WorkSession; taskTitle: string } | null>(
+      null,
+    );
 
     const { data: areas = [] } = useQuery({ queryKey: ["areas"], queryFn: fetchAreas });
     const areaById = useMemo(() => new Map(areas.map((a) => [a.id, a])), [areas]);
@@ -89,8 +94,9 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
       [occurrences, areaById],
     );
 
-    // Work sessions render as outlined chips (spec 7.4) and aren't yet interactive —
-    // starting/completing/resizing a session is Stage 5's work-session lifecycle.
+    // Work sessions render as outlined chips (spec 7.4). Resizing/dragging them is deferred
+    // (that's really the scheduling engine's job in Stage 6); clicking opens quick actions
+    // for the status lifecycle (start/complete/partial/skip).
     const workSessionItems = useMemo(
       () =>
         (data?.workSessions ?? []).map((ws) => ({
@@ -102,7 +108,7 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
           borderColor: DEFAULT_COLOR,
           textColor: "#cbd5e1",
           editable: false,
-          extendedProps: { kind: "workSession" as const },
+          extendedProps: { kind: "workSession" as const, session: ws },
         })),
       [data, taskTitleById],
     );
@@ -226,7 +232,14 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
               fcRef.current?.getApi().unselect();
             }}
             eventClick={(arg) => {
-              if (isWorkSession(arg)) return;
+              if (isWorkSession(arg)) {
+                const session = arg.event.extendedProps.session as WorkSession;
+                setWorkSessionPopover({
+                  session,
+                  taskTitle: taskTitleById.get(session.taskId) ?? "Work session",
+                });
+                return;
+              }
               setDetailsOccurrence(findOccurrence(arg));
             }}
             eventDrop={(arg) => {
@@ -315,6 +328,19 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
             onDeleted={() => {
               setEditorInitial(null);
               refetchCalendar();
+            }}
+          />
+        )}
+
+        {workSessionPopover && (
+          <WorkSessionPopover
+            session={workSessionPopover.session}
+            taskTitle={workSessionPopover.taskTitle}
+            onClose={() => setWorkSessionPopover(null)}
+            onChanged={() => {
+              setWorkSessionPopover(null);
+              refetchCalendar();
+              queryClient.invalidateQueries({ queryKey: ["dashboard"] });
             }}
           />
         )}

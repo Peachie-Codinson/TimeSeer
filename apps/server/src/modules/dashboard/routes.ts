@@ -3,11 +3,10 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { requireSession } from "../../middleware/auth.js";
 import { expandEventsInRange } from "../calendar/service.js";
+import { computeQuotaSummary } from "../quotas/service.js";
 import { getDashboardTaskLists } from "../tasks/service.js";
-import { listWorkSessionsInRange } from "../work-sessions/service.js";
+import { listTasksWithActiveSession, listWorkSessionsInRange } from "../work-sessions/service.js";
 
-// Quotas (Stage 5) don't exist yet; "now" needs a Stage 5+ work-session lifecycle
-// (currently sessions only ever reach "planned"), so it stays empty until then.
 export const dashboardRoutes = new Hono()
   .use("*", requireSession)
   .get(
@@ -25,9 +24,6 @@ export const dashboardRoutes = new Hono()
       const { rangeStart, rangeEnd } = c.req.valid("query");
       const taskLists = getDashboardTaskLists(Date.now());
 
-      // "now" is explicitly typed as never[] rather than left implicit, so it
-      // doesn't infer `never[]` in a way that poisons the whole response's
-      // type in the Hono RPC client (as an empty array literal would).
       const response: {
         calendar: {
           events: ReturnType<typeof expandEventsInRange>;
@@ -35,17 +31,12 @@ export const dashboardRoutes = new Hono()
           deadlines: unknown[];
         };
         tasks: {
-          now: never[];
+          now: ReturnType<typeof listTasksWithActiveSession>;
           inProgress: typeof taskLists.inProgress;
           urgent: typeof taskLists.urgent;
           activeNext: typeof taskLists.activeNext;
         };
-        quotaSummary: {
-          completedMinutes: number;
-          scheduledMinutes: number;
-          targetMinutes: number;
-          remainingMinutes: number;
-        };
+        quotaSummary: ReturnType<typeof computeQuotaSummary>;
       } = {
         calendar: {
           events: expandEventsInRange(rangeStart, rangeEnd),
@@ -53,15 +44,10 @@ export const dashboardRoutes = new Hono()
           deadlines: [],
         },
         tasks: {
-          now: [],
+          now: listTasksWithActiveSession(),
           ...taskLists,
         },
-        quotaSummary: {
-          completedMinutes: 0,
-          scheduledMinutes: 0,
-          targetMinutes: 0,
-          remainingMinutes: 0,
-        },
+        quotaSummary: computeQuotaSummary(),
       };
 
       return c.json(response);
