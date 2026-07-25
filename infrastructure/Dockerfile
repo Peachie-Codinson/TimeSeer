@@ -8,10 +8,12 @@ FROM base AS deps
 COPY pnpm-workspace.yaml package.json ./
 COPY apps/server/package.json apps/server/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY packages/scheduler/package.json packages/scheduler/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
+RUN pnpm --filter @planner/scheduler build
 RUN pnpm --filter @planner/web build
 RUN pnpm --filter @planner/server build
 RUN pnpm deploy --filter @planner/server --prod /repo/out/server

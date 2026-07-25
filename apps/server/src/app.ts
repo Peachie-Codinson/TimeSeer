@@ -9,7 +9,9 @@ import { authRoutes } from "./modules/auth/routes.js";
 import { calendarRoutes, eventsRoutes } from "./modules/calendar/routes.js";
 import { dashboardRoutes } from "./modules/dashboard/routes.js";
 import { healthRoutes } from "./modules/health/routes.js";
+import { notificationsRoutes } from "./modules/notifications/routes.js";
 import { quotasRoutes } from "./modules/quotas/routes.js";
+import { schedulingRoutes } from "./modules/scheduling/routes.js";
 import { boardRoutes, tasksRoutes } from "./modules/tasks/routes.js";
 import { workSessionsRoutes } from "./modules/work-sessions/routes.js";
 
@@ -24,7 +26,9 @@ const api = new Hono()
   .route("/board", boardRoutes)
   .route("/work-sessions", workSessionsRoutes)
   .route("/archive", archiveRoutes)
-  .route("/quotas", quotasRoutes);
+  .route("/quotas", quotasRoutes)
+  .route("/schedule", schedulingRoutes)
+  .route("/notifications", notificationsRoutes);
 
 const app = new Hono();
 

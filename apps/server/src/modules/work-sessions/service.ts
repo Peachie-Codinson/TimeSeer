@@ -13,12 +13,12 @@ export interface WorkSessionInput {
   taskId: string;
   startsAt: number;
   endsAt: number;
+  automaticallyAdded?: boolean;
 }
 
 /**
- * Creates a planned work session for a task. This is the minimal slice needed for
- * task-to-calendar drag (Stage 4); the full lifecycle (start/complete/partial/skip/lock)
- * lands in Stage 5.
+ * Creates a planned work session for a task. Used both for task-to-calendar drag (Stage 4)
+ * and for applying scheduler proposals (Stage 6, with automaticallyAdded set).
  */
 export function createWorkSession(input: WorkSessionInput) {
   const task = db.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, input.taskId)).get();
@@ -33,7 +33,7 @@ export function createWorkSession(input: WorkSessionInput) {
       endsAt: input.endsAt,
       plannedMinutes: Math.round((input.endsAt - input.startsAt) / 60_000),
       status: "planned",
-      automaticallyAdded: 0,
+      automaticallyAdded: input.automaticallyAdded ? 1 : 0,
       createdAt: now,
       updatedAt: now,
     })

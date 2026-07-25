@@ -17,6 +17,7 @@ interface ToolbarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onCreate: () => void;
+  onSuggestSchedule: () => void;
 }
 
 export function Toolbar({
@@ -29,6 +30,7 @@ export function Toolbar({
   searchQuery,
   onSearchChange,
   onCreate,
+  onSuggestSchedule,
 }: ToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
@@ -68,6 +70,9 @@ export function Toolbar({
             </button>
           ))}
         </div>
+        <button className="btn-secondary" onClick={onSuggestSchedule}>
+          Suggest schedule
+        </button>
         <button className="btn-primary w-auto px-3 py-1.5" onClick={onCreate}>
           Create
         </button>

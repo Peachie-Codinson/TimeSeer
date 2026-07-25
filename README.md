@@ -8,7 +8,8 @@ architecture across all phases.
 
 This repository currently implements **Stage 1: Foundation**, **Stage 2: Minimal
 Authentication**, **Stage 3: Combined Dashboard and Calendar**, **Stage 4: Task
-Management**, and **Stage 5: Sessions, Archive, and Quotas**:
+Management**, **Stage 5: Sessions, Archive, and Quotas**, and **Stage 6: Basic Scheduling
+and Notifications**:
 
 - pnpm workspace (`apps/server`, `apps/web`)
 - Hono API server on Node, with `/api/v1/health/live` and `/api/v1/health/ready`
@@ -58,10 +59,25 @@ Management**, and **Stage 5: Sessions, Archive, and Quotas**:
   flushing is manually triggered via Immolate for now
 - Quotas: CRUD plus a compact daily summary (completed/scheduled/target/remaining minutes)
   computed from today's work sessions, editable inline from the dashboard's Quota Summary
+- `packages/scheduler`: a pure, unit-tested TypeScript greedy-heuristic engine (spec 14.1) —
+  sorts tasks by time-gate/deadline/overdue/priority/position, computes free time against
+  fixed events, locked/active work sessions, working hours, and the daily quota cap, then
+  proposes sessions with a short explanation per placement, or explains why a task couldn't
+  be scheduled. `POST /api/v1/schedule/preview` returns proposals for review; `POST
+  /api/v1/schedule/apply` turns the accepted subset into real work sessions; `GET
+  /api/v1/schedule/risks` surfaces overdue/insufficient-time warnings. A "Suggest schedule"
+  button on the calendar opens a preview with per-proposal checkboxes and an Apply action
+- A persistent job runner (spec 13.7): polls `scheduled_jobs` every 30s, retries failures
+  with exponential backoff, and catches up on overdue jobs immediately on boot. Seeds a
+  recurring weekly archive-flush job, so Stage 5's archive now actually runs automatically
+  instead of only via manual Immolate
+- In-app notifications: `GET /api/v1/notifications` computes reminders on read (imminent
+  events/sessions, approaching/overdue deadlines, time-gates opening or closing, a completed
+  weekly archive flush) — no fired-notification table to maintain. A bell icon polls this
+  every 60s, shows a dropdown, and fires permission-gated Browser Notification API alerts for
+  newly-seen items
 
-Not yet implemented: the scheduling engine, notifications, persistent scheduled jobs (the
-weekly auto-archive cron), the Tauri desktop shell, and the Canvas integration stub. These
-land in later stages.
+Not yet implemented: the Tauri desktop shell and the Canvas integration stub (both Stage 7).
 
 ## Development
 

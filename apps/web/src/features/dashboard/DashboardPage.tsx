@@ -6,6 +6,7 @@ import { authStatusQueryKey } from "../auth/useAuthStatus";
 import { AreaList } from "../areas/AreaList";
 import { CalendarView, type CalendarViewHandle } from "../calendar/CalendarView";
 import { MiniCalendar } from "../calendar/MiniCalendar";
+import { NotificationBell } from "../notifications/NotificationBell";
 import { TaskPanel } from "./TaskPanel";
 
 export function DashboardPage() {
@@ -19,6 +20,7 @@ export function DashboardPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-sm font-semibold">Planner</h1>
           <div className="flex items-center gap-2 text-xs text-slate-400">
+            <NotificationBell />
             <Link to="/sessions" className="hover:text-white">
               Devices
             </Link>

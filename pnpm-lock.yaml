@@ -19,6 +19,9 @@ importers:
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.0.2
+      '@planner/scheduler':
+        specifier: workspace:*
+        version: link:../../packages/scheduler
       better-sqlite3:
         specifier: ^11.7.0
         version: 11.10.0
@@ -129,6 +132,15 @@ importers:
       vite:
         specifier: ^6.0.7
         version: 6.4.3(@types/node@22.20.1)(jiti@1.21.7)(tsx@4.23.1)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.1)
+
+  packages/scheduler:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)

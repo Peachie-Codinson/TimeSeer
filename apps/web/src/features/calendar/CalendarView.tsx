@@ -8,6 +8,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { fetchAreas } from "../areas/api";
+import { SchedulePreviewModal } from "../scheduling/SchedulePreviewModal";
 import { fetchTasks } from "../tasks/api";
 import { createWorkSession } from "../work-sessions/api";
 import type { WorkSession } from "../work-sessions/api";
@@ -49,6 +50,7 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
     const [workSessionPopover, setWorkSessionPopover] = useState<{ session: WorkSession; taskTitle: string } | null>(
       null,
     );
+    const [showSchedulePreview, setShowSchedulePreview] = useState(false);
 
     const { data: areas = [] } = useQuery({ queryKey: ["areas"], queryFn: fetchAreas });
     const areaById = useMemo(() => new Map(areas.map((a) => [a.id, a])), [areas]);
@@ -198,6 +200,7 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
             const now = Date.now();
             setQuickCreateDraft({ start: now, end: now + 60 * 60 * 1000 });
           }}
+          onSuggestSchedule={() => setShowSchedulePreview(true)}
         />
 
         <div className="min-h-0 flex-1 p-2">
@@ -339,6 +342,19 @@ export const CalendarView = forwardRef<CalendarViewHandle, { onDateChange?: (dat
             onClose={() => setWorkSessionPopover(null)}
             onChanged={() => {
               setWorkSessionPopover(null);
+              refetchCalendar();
+              queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            }}
+          />
+        )}
+
+        {showSchedulePreview && range && (
+          <SchedulePreviewModal
+            rangeStart={range.start}
+            rangeEnd={range.end}
+            onClose={() => setShowSchedulePreview(false)}
+            onApplied={() => {
+              setShowSchedulePreview(false);
               refetchCalendar();
               queryClient.invalidateQueries({ queryKey: ["dashboard"] });
             }}
