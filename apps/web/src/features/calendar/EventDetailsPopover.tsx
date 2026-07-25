@@ -1,4 +1,5 @@
 import { Modal } from "../../components/Modal";
+import { openExternal } from "../../platform/tauri";
 import type { Area } from "../areas/api";
 import { deleteEventOrOccurrence } from "./api";
 import type { EventOccurrence } from "./types";
@@ -37,16 +38,24 @@ export function EventDetailsPopover({
         )}
         <p className="text-slate-300">{formatRange()}</p>
         {occurrence.recurring && <p className="text-xs text-slate-500">Recurring event</p>}
-        {occurrence.locationName && <p className="text-slate-300">{occurrence.locationName}</p>}
+        {occurrence.locationName &&
+          (occurrence.locationUrl ? (
+            <button
+              className="block text-left text-slate-300 underline decoration-slate-600 hover:text-white"
+              onClick={() => void openExternal(occurrence.locationUrl!)}
+            >
+              {occurrence.locationName}
+            </button>
+          ) : (
+            <p className="text-slate-300">{occurrence.locationName}</p>
+          ))}
         {occurrence.meetingUrl && (
-          <a
-            href={occurrence.meetingUrl}
-            target="_blank"
-            rel="noreferrer"
+          <button
             className="block text-emerald-400 hover:text-emerald-300"
+            onClick={() => void openExternal(occurrence.meetingUrl!)}
           >
             Join meeting
-          </a>
+          </button>
         )}
         {occurrence.description && <p className="whitespace-pre-wrap text-slate-400">{occurrence.description}</p>}
 

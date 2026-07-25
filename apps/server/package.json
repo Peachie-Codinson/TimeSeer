@@ -12,6 +12,8 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "create-setup-token": "tsx src/scripts/create-setup-token.ts",
     "reset-owner": "tsx src/scripts/reset-owner.ts",
+    "backup": "tsx src/scripts/backup.ts",
+    "restore": "tsx src/scripts/restore.ts",
     "test": "vitest run"
   },
   "dependencies": {

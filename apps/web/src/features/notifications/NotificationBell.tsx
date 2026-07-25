@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { isTauri, sendNativeNotification } from "../../platform/tauri";
 import { type Notification as AppNotification, fetchNotifications } from "./api";
 
 const POLL_INTERVAL_MS = 60_000;
@@ -33,17 +34,20 @@ export function NotificationBell() {
     const fresh = notifications.filter((n) => !seenIds.current!.has(n.id));
     seenIds.current = new Set(notifications.map((n) => n.id));
 
-    if (fresh.length > 0 && typeof Notification !== "undefined" && Notification.permission === "granted") {
-      for (const n of fresh) {
-        new Notification("Planner", { body: n.message });
-      }
+    for (const n of fresh) {
+      void sendNativeNotification("Planner", n.message).then((sentNatively) => {
+        if (!sentNatively && typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("Planner", { body: n.message });
+        }
+      });
     }
   }, [notifications]);
 
   const requestPermission = () => {
-    if (permissionRequested || typeof Notification === "undefined") return;
+    if (permissionRequested) return;
     setPermissionRequested(true);
-    if (Notification.permission === "default") {
+    // In Tauri, permission is requested lazily inside sendNativeNotification itself.
+    if (!isTauri() && typeof Notification !== "undefined" && Notification.permission === "default") {
       void Notification.requestPermission();
     }
   };
