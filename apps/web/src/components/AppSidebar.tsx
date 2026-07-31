@@ -95,7 +95,7 @@ export function AppSidebar() {
         </div>
         <div className="nc-hr" style={{ height: 1, background: "var(--color-divider)", margin: 0 }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <NavItem icon={<GaugeIcon {...iconProps} />} label="Quotas" />
+          <NavItem to="/quotas" icon={<GaugeIcon {...iconProps} />} label="Quotas" />
           <NavItem to="/archive" icon={<ArchiveIcon {...iconProps} />} label="Archive" />
           <NavItem to="/areas" icon={<FoldersIcon {...iconProps} />} label="Areas" />
           <NavItem icon={<GearIcon {...iconProps} />} label="Settings" />

@@ -1,6 +1,6 @@
 import { and, eq, gte, lt } from "drizzle-orm";
 import { db } from "../../db/connection.js";
-import { quotas, workSessions } from "../../db/schema.js";
+import { quotas, tasks, workSessions } from "../../db/schema.js";
 
 export class NotFoundError extends Error {}
 
@@ -17,6 +17,10 @@ export interface QuotaInput {
 
 export function listQuotas() {
   return db.select().from(quotas).all();
+}
+
+export function getQuota(id: string) {
+  return db.select().from(quotas).where(eq(quotas.id, id)).get();
 }
 
 export function createQuota(input: QuotaInput) {
@@ -55,6 +59,68 @@ function startOfDay(ms: number) {
   const d = new Date(ms);
   d.setHours(0, 0, 0, 0);
   return d.getTime();
+}
+
+/** Most recent Sunday 00:00 at or before `ms` (the app's week starts Sunday). */
+function startOfWeek(ms: number) {
+  const day = startOfDay(ms);
+  const weekday = new Date(day).getDay();
+  return day - weekday * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Sums planned and completed minutes from work sessions falling in a quota's *current*
+ * period (today for "daily", this week for "weekly"), scoped to the quota's area when
+ * scopeType is "area" (via a join on the session's task). Spec 14: Planned/Completed/
+ * Remaining columns in the Quotas table.
+ */
+export function computeProgressForQuota(quota: typeof quotas.$inferSelect, now: number = Date.now()) {
+  const periodStart = quota.period === "weekly" ? startOfWeek(now) : startOfDay(now);
+  const periodEnd = periodStart + (quota.period === "weekly" ? 7 : 1) * 24 * 60 * 60 * 1000;
+
+  const inRange = and(gte(workSessions.startsAt, periodStart), lt(workSessions.startsAt, periodEnd));
+
+  const sessions =
+    quota.scopeType === "area" && quota.scopeId
+      ? db
+          .select({ status: workSessions.status, actualMinutes: workSessions.actualMinutes, plannedMinutes: workSessions.plannedMinutes })
+          .from(workSessions)
+          .innerJoin(tasks, eq(workSessions.taskId, tasks.id))
+          .where(and(inRange, eq(tasks.areaId, quota.scopeId)))
+          .all()
+      : db
+          .select({ status: workSessions.status, actualMinutes: workSessions.actualMinutes, plannedMinutes: workSessions.plannedMinutes })
+          .from(workSessions)
+          .where(inRange)
+          .all();
+
+  let completedMinutes = 0;
+  let plannedMinutes = 0;
+  for (const s of sessions) {
+    if (s.status === "completed" || s.status === "partial") completedMinutes += s.actualMinutes ?? 0;
+    else if (s.status === "planned" || s.status === "in_progress") plannedMinutes += s.plannedMinutes;
+  }
+  return { periodStart, periodEnd, plannedMinutes, completedMinutes };
+}
+
+export function computeAllQuotaProgress(now: number = Date.now()) {
+  return listQuotas().map((q) => ({ quotaId: q.id, ...computeProgressForQuota(q, now) }));
+}
+
+/**
+ * Progress for each of a quota's `count` *previous* periods (1 = last period, 2 = the one
+ * before that, ...), for the Quotas UI's History row. Each entry is computed from real work
+ * sessions the same way as the current period — there's no synthetic/placeholder data here.
+ */
+export function computeQuotaHistory(quota: typeof quotas.$inferSelect, count: number, now: number = Date.now()) {
+  const periodDays = quota.period === "weekly" ? 7 : 1;
+  const periodMs = periodDays * 24 * 60 * 60 * 1000;
+  const history = [];
+  for (let periodsAgo = 1; periodsAgo <= count; periodsAgo++) {
+    const progress = computeProgressForQuota(quota, now - periodsAgo * periodMs);
+    history.push({ periodsAgo, ...progress });
+  }
+  return history;
 }
 
 /**

@@ -171,9 +171,9 @@ function QuotaTargetEditor({ targetMinutes }: { targetMinutes: number }) {
     const quotas = await fetchQuotas();
     const existing = quotas.find((q) => q.scopeType === "global" && q.period === "daily");
     if (existing) {
-      await updateQuota(existing.id, minutes);
+      await updateQuota(existing.id, { targetMinutes: minutes });
     } else {
-      await createQuota(minutes);
+      await createQuota({ scopeType: "global", period: "daily", targetMinutes: minutes });
     }
     setEditing(false);
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
