@@ -1,77 +1,145 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { CSSProperties } from "react";
+import type { Area } from "../areas/api";
 import { taskBadges } from "./badges";
+import { formatDueLabel, formatRemainingLabel } from "./format";
 import type { Task } from "./types";
 
-export function TaskCard({
+function CardBody({
   task,
-  onClick,
-  onStart,
-  onResolve,
-  selectable,
-  selected,
-  onToggleSelect,
+  area,
+  density,
+  onOpen,
+  hideContent,
 }: {
   task: Task;
-  onClick: () => void;
-  onStart?: () => void;
-  onResolve?: () => void;
-  selectable?: boolean;
-  selected?: boolean;
-  onToggleSelect?: () => void;
+  area: Area | undefined;
+  density: "comfortable" | "compact";
+  onOpen: () => void;
+  hideContent?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
-  const badges = taskBadges(task);
+  const deadline = task.hardDeadline ?? task.softDeadline;
+  const hasDeadline = deadline !== null && deadline !== undefined;
+  // "Due today" duplicates the due-date meta line below (which already says "Due today"/"tomorrow"/
+  // a date); drop it here so the card doesn't show two conflicting-looking due statements.
+  const badges = taskBadges(task).filter((b) => b.label !== "Due today");
+  const padding = density === "compact" ? "9px 10px" : "var(--space-4)";
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      {...attributes}
-      {...listeners}
-      onClick={onClick}
-      className={`cursor-pointer rounded-md border border-slate-800 bg-slate-900 p-3 text-sm hover:border-slate-600 ${
-        isDragging ? "opacity-40" : ""
-      } ${selected ? "ring-1 ring-emerald-500" : ""}`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-start gap-2">
-          {selectable && (
-            <input
-              type="checkbox"
-              checked={!!selected}
-              onChange={onToggleSelect}
-              onClick={(e) => e.stopPropagation()}
-              className="mt-1"
-            />
-          )}
-          <p className="font-medium text-slate-100">{task.title}</p>
+    <div style={{ padding, position: "relative", visibility: hideContent ? "hidden" : "visible" }}>
+      {hideContent && <div className="nc-drop-placeholder" style={{ position: "absolute", inset: 0 }} />}
+      {area && (
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 4 }}>
+          <div
+            style={{
+              width: 9,
+              height: 9,
+              borderRadius: "50%",
+              background: area.color ?? "var(--color-accent)",
+              boxShadow: "0 0 0 2px var(--color-surface)",
+            }}
+          />
         </div>
-        <span className="shrink-0 text-xs text-slate-600">#{task.issueNumber}</span>
+      )}
+      <div className="nc-card-kicker" style={{ display: "flex", alignItems: "center", gap: 6, paddingRight: 36 }}>
+        <span>
+          #{task.issueNumber}
+          {area ? ` · ${area.name}` : ""}
+        </span>
       </div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="nc-card-title"
+        style={{
+          display: "block",
+          margin: "4px 0 6px",
+          color: "var(--color-text)",
+          background: "none",
+          border: "none",
+          padding: 0,
+          textAlign: "left",
+          cursor: "pointer",
+          width: "100%",
+        }}
+      >
+        {task.title}
+      </button>
+      {hasDeadline && (
+        <div className="nc-card-meta" style={{ marginBottom: 4 }}>
+          {formatDueLabel(deadline)}
+          {task.remainingMinutes !== null ? ` · ${formatRemainingLabel(task.remainingMinutes)}` : ""}
+        </div>
+      )}
       {badges.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
           {badges.map((b) => (
-            <span key={b.label} className={`rounded px-1.5 py-0.5 text-[11px] ${b.className}`}>
+            <div key={b.label} className="nc-tag nc-tag-outline">
               {b.label}
-            </span>
+            </div>
           ))}
         </div>
       )}
-      {(onStart || onResolve) && (
-        <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
-          {onStart && (
-            <button className="btn-secondary px-2 py-1 text-xs" onClick={onStart}>
-              Start
-            </button>
-          )}
-          {onResolve && (
-            <button className="btn-secondary px-2 py-1 text-xs" onClick={onResolve}>
-              Resolve
-            </button>
-          )}
-        </div>
-      )}
+    </div>
+  );
+}
+
+/** The floating "lifted" preview shown in the DndContext's DragOverlay while a card is held. */
+export function TaskCardPreview({
+  task,
+  area,
+  density,
+}: {
+  task: Task;
+  area: Area | undefined;
+  density: "comfortable" | "compact";
+}) {
+  return (
+    <div
+      className="nc-card"
+      style={{
+        transform: "scale(1.05) rotate(2deg)",
+        boxShadow: "0 0 0 2px var(--color-accent), 0 26px 46px rgba(0,0,0,0.55), 0 6px 12px rgba(0,0,0,0.35)",
+      }}
+    >
+      <CardBody task={task} area={area} density={density} onOpen={() => {}} />
+    </div>
+  );
+}
+
+export function TaskCard({
+  task,
+  area,
+  density,
+  onOpen,
+  burning,
+}: {
+  task: Task;
+  area: Area | undefined;
+  density: "comfortable" | "compact";
+  onOpen: () => void;
+  /** True while this card is animating out after an Immolate flush. */
+  burning?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    cursor: "grab",
+    position: "relative",
+    overflow: "hidden",
+    flexShrink: 0,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={`nc-card${burning ? " nc-immolating" : ""}`} {...attributes} {...listeners}>
+      <CardBody task={task} area={area} density={density} onOpen={onOpen} hideContent={isDragging} />
     </div>
   );
 }
