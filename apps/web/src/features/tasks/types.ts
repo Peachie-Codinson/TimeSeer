@@ -22,6 +22,10 @@ export interface Task {
   schedulingMode: SchedulingMode;
   progressPercent: number;
   blockedReason: string | null;
+  archiveProtected: number;
+  resolvedAt: number | null;
+  archivedAt: number | null;
+  archiveBatchId: string | null;
   externalSource: string | null;
   version: number;
   createdAt: number;

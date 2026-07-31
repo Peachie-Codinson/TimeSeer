@@ -1,12 +1,22 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requireSession } from "../../middleware/auth.js";
-import { NotFoundError, flushArchive, listArchivedTasks, permanentlyDeleteTask, previewFlush, restoreTask } from "./service.js";
+import {
+  NotFoundError,
+  flushArchive,
+  latestWeeklyFlushBatch,
+  listArchivedTasks,
+  permanentlyDeleteTask,
+  previewFlush,
+  restoreTask,
+} from "./service.js";
 
 export const archiveRoutes = new Hono()
   .use("*", requireSession)
 
   .get("/", (c) => c.json(listArchivedTasks()))
+
+  .get("/batches/latest-weekly-flush", (c) => c.json(latestWeeklyFlushBatch()))
 
   .post("/flush-preview", (c) => c.json(previewFlush()))
 

@@ -12,7 +12,7 @@ type JobRow = typeof scheduledJobs.$inferSelect;
 
 const handlers: Record<string, (payload: unknown) => void> = {
   "archive-flush": () => {
-    flushArchive();
+    flushArchive(undefined, "weekly_flush");
   },
 };
 

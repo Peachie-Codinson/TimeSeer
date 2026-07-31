@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { CSSProperties } from "react";
 import type { Area } from "../areas/api";
 import { taskBadges } from "./badges";
-import { formatDueLabel, formatRemainingLabel } from "./format";
+import { formatDueLabel, formatRemainingLabel } from "../../lib/format";
 import type { Task } from "./types";
 
 function CardBody({

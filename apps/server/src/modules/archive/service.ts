@@ -30,9 +30,11 @@ export function previewFlush() {
  * "Immolate all" (taskIds omitted) archives every age-eligible resolved task. "Immolate
  * selected" (taskIds given) archives exactly those tasks instead, as long as each is
  * currently resolved and not archive-protected — bypassing the weekly-eligibility age check
- * since the user explicitly chose them (spec 8.2).
+ * since the user explicitly chose them (spec 8.2). `trigger` records whether this came from a
+ * user's Immolate click ("manual") or the persistent job runner's weekly cron ("weekly_flush"),
+ * surfaced in the Archive UI's Source column/filter.
  */
-export function flushArchive(taskIds?: string[]) {
+export function flushArchive(taskIds?: string[], trigger: "manual" | "weekly_flush" = "manual") {
   return db.transaction((tx) => {
     const targets = taskIds
       ? taskIds
@@ -43,7 +45,7 @@ export function flushArchive(taskIds?: string[]) {
     if (targets.length === 0) return { batchId: null, archivedCount: 0 };
 
     const now = Date.now();
-    const batch = tx.insert(archiveBatches).values({ createdAt: now, taskCount: targets.length }).returning().get();
+    const batch = tx.insert(archiveBatches).values({ createdAt: now, taskCount: targets.length, trigger }).returning().get();
 
     for (const task of targets) {
       tx.update(tasks)
@@ -57,7 +59,28 @@ export function flushArchive(taskIds?: string[]) {
 }
 
 export function listArchivedTasks() {
-  return db.select().from(tasks).where(eq(tasks.state, "archived")).orderBy(desc(tasks.archivedAt)).all();
+  const rows = db
+    .select({ task: tasks, batchTrigger: archiveBatches.trigger })
+    .from(tasks)
+    .leftJoin(archiveBatches, eq(tasks.archiveBatchId, archiveBatches.id))
+    .where(eq(tasks.state, "archived"))
+    .orderBy(desc(tasks.archivedAt))
+    .all();
+
+  return rows.map((r) => ({ ...r.task, source: r.batchTrigger ?? ("manual" as const) }));
+}
+
+/** Most recent batch created by the automatic weekly flush, for the Archive UI's batch-info drawer. */
+export function latestWeeklyFlushBatch() {
+  return (
+    db
+      .select()
+      .from(archiveBatches)
+      .where(eq(archiveBatches.trigger, "weekly_flush"))
+      .orderBy(desc(archiveBatches.createdAt))
+      .limit(1)
+      .get() ?? null
+  );
 }
 
 export function restoreTask(taskId: string) {

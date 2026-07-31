@@ -23,3 +23,19 @@ export function formatRemainingLabel(minutes: number): string {
   if (m === 0) return `${h}h left`;
   return `${h}h ${m}m left`;
 }
+
+/** "1h 35m" / "40m", with no trailing label — for durations that aren't "remaining". */
+export function formatDuration(minutes: number): string {
+  const mins = Math.max(0, Math.round(minutes));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h <= 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+/** "Jul 26, 2026" for an epoch-ms timestamp. */
+export function formatFullDate(ms: number): string {
+  const d = new Date(ms);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}

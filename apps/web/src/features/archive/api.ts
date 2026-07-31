@@ -1,9 +1,26 @@
 import { apiClient } from "../../api/client";
 import type { Task } from "../tasks/types";
 
-export async function fetchArchive(): Promise<Task[]> {
+export interface ArchivedTask extends Task {
+  source: "manual" | "weekly_flush";
+}
+
+export interface WeeklyFlushBatch {
+  id: string;
+  createdAt: number;
+  taskCount: number;
+  trigger: "manual" | "weekly_flush";
+}
+
+export async function fetchArchive(): Promise<ArchivedTask[]> {
   const res = await apiClient.archive.$get();
   if (!res.ok) throw new Error("Failed to load archive");
+  return res.json();
+}
+
+export async function fetchLatestWeeklyFlushBatch(): Promise<WeeklyFlushBatch | null> {
+  const res = await apiClient.archive.batches["latest-weekly-flush"].$get();
+  if (!res.ok) throw new Error("Failed to load latest weekly flush batch");
   return res.json();
 }
 

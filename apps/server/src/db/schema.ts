@@ -186,6 +186,12 @@ export const archiveBatches = sqliteTable("archive_batches", {
   id: id(),
   createdAt: integer("created_at").notNull(),
   taskCount: integer("task_count").notNull().default(0),
+  // "manual" for an Immolate click (all-eligible or explicitly-selected), "weekly_flush" for
+  // the persistent job runner's automatic cron flush (spec 13.7) — surfaced in the Archive
+  // UI's Source column/filter.
+  trigger: text("trigger", { enum: ["manual", "weekly_flush"] })
+    .notNull()
+    .default("manual"),
 });
 
 export const taskResolutions = sqliteTable("task_resolutions", {
