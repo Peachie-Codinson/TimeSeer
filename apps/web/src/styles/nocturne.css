@@ -47,6 +47,7 @@
   font-size: 14px;
 }
 
+.nc-shell, .nc-shell *, .nc-shell *::before, .nc-shell *::after { box-sizing: border-box; }
 .nc-shell a { color: var(--color-accent); text-decoration: none; }
 .nc-shell a:hover { color: var(--color-accent-300); }
 .nc-shell ::-webkit-scrollbar { width: 10px; height: 10px; }

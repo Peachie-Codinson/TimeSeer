@@ -91,7 +91,7 @@ export function AppSidebar() {
           <NavItem to="/" icon={<CalendarBlankIcon {...iconProps} />} label="Calendar" />
           <NavItem to="/tasks" icon={<CheckSquareIcon {...iconProps} />} label="Tasks" />
           <NavItem icon={<span style={{ display: "inline-flex", width: 15 }} />} label="Upcoming" />
-          <NavItem icon={<TargetIcon {...iconProps} />} label="Focus" />
+          <NavItem to="/focus" icon={<TargetIcon {...iconProps} />} label="Focus" />
         </div>
         <div className="nc-hr" style={{ height: 1, background: "var(--color-divider)", margin: 0 }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>

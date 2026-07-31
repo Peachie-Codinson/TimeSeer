@@ -52,6 +52,20 @@ export function listTasksWithActiveSession() {
     .map((row) => row.task);
 }
 
+/** The in-progress work session and its task, for the Focus page (spec 15). At most one
+ * session is normally in_progress at a time; this takes the first if there happen to be more. */
+export function getActiveSessionWithTask() {
+  return (
+    db
+      .select({ session: workSessions, task: tasks })
+      .from(workSessions)
+      .innerJoin(tasks, eq(workSessions.taskId, tasks.id))
+      .where(eq(workSessions.status, "in_progress"))
+      .limit(1)
+      .get() ?? null
+  );
+}
+
 export function listWorkSessionsInRange(rangeStart: number, rangeEnd: number) {
   return db
     .select()

@@ -10,6 +10,7 @@ import {
   completeSession,
   createWorkSession,
   deleteWorkSession,
+  getActiveSessionWithTask,
   getWorkSession,
   partialSession,
   setSessionLocked,
@@ -51,6 +52,8 @@ export const workSessionsRoutes = new Hono()
       }
     },
   )
+
+  .get("/active", (c) => c.json(getActiveSessionWithTask()))
 
   .get("/:sessionId", (c) => {
     const session = getWorkSession(c.req.param("sessionId"));

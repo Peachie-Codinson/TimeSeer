@@ -7,6 +7,7 @@ import { SessionsPage } from "./features/auth/SessionsPage";
 import { SetupPage } from "./features/auth/SetupPage";
 import { useAuthStatus } from "./features/auth/useAuthStatus";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { FocusPage } from "./features/focus/FocusPage";
 import { QuotasPage } from "./features/quotas/QuotasPage";
 import { TaskBoardPage } from "./features/tasks/TaskBoardPage";
 
@@ -53,6 +54,14 @@ export function App() {
         element={
           <RequireAuth>
             <ArchivePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/focus"
+        element={
+          <RequireAuth>
+            <FocusPage />
           </RequireAuth>
         }
       />
