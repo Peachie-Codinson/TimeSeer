@@ -8,8 +8,10 @@ architecture across all phases.
 
 This repository currently implements **Stage 1: Foundation**, **Stage 2: Minimal
 Authentication**, **Stage 3: Combined Dashboard and Calendar**, **Stage 4: Task
-Management**, **Stage 5: Sessions, Archive, and Quotas**, and **Stage 6: Basic Scheduling
-and Notifications**:
+Management**, **Stage 5: Sessions, Archive, and Quotas**, **Stage 6: Basic Scheduling
+and Notifications**, and most of **Stage 7: Desktop Shell and Polish** — including a
+full pass to bring the whole web UI onto the "Nocturne" dark design system produced by
+the project's Claude Design handoff (see below):
 
 - pnpm workspace (`apps/server`, `apps/web`)
 - Hono API server on Node, with `/api/v1/health/live` and `/api/v1/health/ready`
@@ -50,15 +52,19 @@ and Notifications**:
   Resolving a task closes its in-progress session and cancels still-planned future ones
   (spec 13.5). The dashboard's "Now" section shows tasks with a currently in-progress session
 - Archive: age-based eligibility (resolved 7+ days, not archive-protected), a transactional
-  flush that creates an archive batch and moves tasks to `archived`, restore back to
-  `resolved`, and permanent deletion (cascading work sessions/resolutions). The `/tasks` board
-  supports multi-select on the Resolved column with "Immolate selected" (bypasses the age
-  check for explicitly chosen tasks) and "Immolate all" (age-eligible only); a `/archive`
-  route lists archived tasks with restore/permanent-delete. The persistent scheduled-job
-  runner that would fire this automatically on a weekly cron is Stage 6 infrastructure —
-  flushing is manually triggered via Immolate for now
-- Quotas: CRUD plus a compact daily summary (completed/scheduled/target/remaining minutes)
-  computed from today's work sessions, editable inline from the dashboard's Quota Summary
+  flush that creates an archive batch (tagged `manual` or `weekly_flush`, per which
+  triggered it) and moves tasks to `archived`, restore back to `resolved`, and permanent
+  deletion (cascading work sessions/resolutions). The Task Board's Resolved column has a
+  single "Immolate" button (archives everything currently age-eligible, no confirmation —
+  per the design's later iterations, which dropped per-card selection and dialogs in favor
+  of one calm action with a burn animation); the `/archive` route is its own page — a table
+  with area/source filters, a weekly-flush batch-info drawer, restore, and a confirmed
+  permanent-delete
+- Quotas: CRUD plus `/quotas` (a full management page — table with a floor-based tiered
+  progress bar, a pace-vs-plan tag, and a real per-quota History disclosure computed by
+  walking previous periods, not synthetic data) and a compact daily summary
+  (completed/scheduled/target/remaining minutes) computed from today's work sessions,
+  editable inline from the dashboard's Quota Summary
 - `packages/scheduler`: a pure, unit-tested TypeScript greedy-heuristic engine (spec 14.1) —
   sorts tasks by time-gate/deadline/overdue/priority/position, computes free time against
   fixed events, locked/active work sessions, working hours, and the daily quota cap, then
@@ -76,8 +82,35 @@ and Notifications**:
   weekly archive flush) — no fired-notification table to maintain. A bell icon polls this
   every 60s, shows a dropdown, and fires permission-gated Browser Notification API alerts for
   newly-seen items
+- Areas: `/areas` — expandable cards (click to reveal the area's tasks), a 14-swatch +
+  native color-wheel picker for each area's calendar/task-card color, rename, and archive
+  (soft-hide via `active:false`)
+- Focus: `/focus` shows the task with a currently in-progress work session (via a new
+  `GET /work-sessions/active`) with a live mm:ss timer seeded from the session's real start
+  time, Pause/Resume (a local-only freeze — there's no "paused" session status), Finish/Mark
+  Partial (report real elapsed minutes), Resolve, Report Blocker, and a distraction-free
+  "Minimal mode"
+- Task Detail drawer (opened from the board or Upcoming): a tabbed Overview / Planning /
+  Calendar / Activity view. Calendar and Activity are backed by two new endpoints,
+  `GET /tasks/:taskId/sessions` and `GET /tasks/:taskId/activity` (the latter surfacing the
+  `activity_log` rows every task transition already wrote, previously not exposed via the API)
+- Upcoming: `/upcoming` — a chronological agenda merging tasks-with-a-deadline, calendar
+  events, and scheduled work sessions, grouped by day, with a Today/This week/This month
+  range and per-area filter chips
+- Settings: `/settings` wires up the sections that have a real backend home today (Security:
+  change password, list/revoke device sessions, logout; Integrations: the Canvas "coming
+  later" placeholder) and marks General/Task Defaults/Notifications/Appearance as explicitly
+  not-yet-implemented rather than shipping controls with no `owner_settings` table to persist
+  them
+- The whole web UI (Dashboard/Calendar, Task Board, Task Detail, Archive, Quotas, Areas,
+  Focus, Settings, Upcoming) runs on "Nocturne", the dark design system from the project's
+  Claude Design handoff — shared tokens/components in `apps/web/src/styles/nocturne.css`,
+  a shared `AppSidebar`, and FullCalendar's own theme variables remapped to match
 
-Not yet implemented: the Tauri desktop shell and the Canvas integration stub (both Stage 7).
+Not yet implemented: the Canvas integration stub, and in-app controls for backup/restore/
+export (those already exist as CLI scripts under `apps/server/src/scripts` and
+`infrastructure/scripts`, just not wired into Settings). The Tauri desktop shell scaffold
+exists under `apps/desktop`.
 
 ## Development
 
