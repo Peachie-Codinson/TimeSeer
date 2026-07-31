@@ -19,9 +19,8 @@ export function PanelTaskCard({
 
   return (
     <div
-      className={`rounded-md border border-slate-800 bg-slate-900 p-2.5 text-sm ${
-        draggable ? "planner-draggable-task cursor-grab active:cursor-grabbing" : ""
-      }`}
+      className={`nc-card${draggable ? " planner-draggable-task" : ""}`}
+      style={{ padding: "var(--space-3)", cursor: draggable ? "grab" : "default" }}
       {...(draggable
         ? {
             "data-task-id": task.id,
@@ -30,23 +29,23 @@ export function PanelTaskCard({
           }
         : {})}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-medium text-slate-100">{task.title}</p>
-        <span className="shrink-0 text-xs text-slate-600">#{task.issueNumber}</span>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500 }}>{task.title}</div>
+        <span style={{ flex: "none", fontSize: 11, color: "color-mix(in srgb, var(--color-text) 40%, transparent)" }}>#{task.issueNumber}</span>
       </div>
       {badges.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
+        <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 6 }}>
           {badges.map((b) => (
-            <span key={b.label} className={`rounded px-1.5 py-0.5 text-[11px] ${b.className}`}>
+            <div key={b.label} className="nc-tag nc-tag-outline">
               {b.label}
-            </span>
+            </div>
           ))}
         </div>
       )}
       {actions && actions.length > 0 && (
-        <div className="mt-2 flex gap-2">
+        <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
           {actions.map((a) => (
-            <button key={a.label} className="btn-secondary px-2 py-1 text-xs" onClick={a.onClick}>
+            <button key={a.label} type="button" className="nc-btn nc-btn-secondary" style={{ fontSize: 12, padding: "4px 8px" }} onClick={a.onClick}>
               {a.label}
             </button>
           ))}

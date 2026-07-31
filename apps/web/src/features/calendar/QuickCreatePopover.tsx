@@ -33,37 +33,31 @@ export function QuickCreatePopover({
 
   return (
     <Modal title="New event" onClose={onClose}>
-      <div className="space-y-3">
-        <input
-          autoFocus
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="input"
-        />
-        <div className="grid grid-cols-2 gap-2">
-          <label className="block text-xs text-slate-400">
-            Start
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <input autoFocus placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} className="nc-input" />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div className="nc-field">
+            <label>Start</label>
             <input
               type="datetime-local"
               value={toLocalInputValue(start)}
               onChange={(e) => setStart(fromLocalInputValue(e.target.value))}
-              className="input mt-1"
+              className="nc-input"
             />
-          </label>
-          <label className="block text-xs text-slate-400">
-            End
+          </div>
+          <div className="nc-field">
+            <label>End</label>
             <input
               type="datetime-local"
               value={toLocalInputValue(end)}
               onChange={(e) => setEnd(fromLocalInputValue(e.target.value))}
-              className="input mt-1"
+              className="nc-input"
             />
-          </label>
+          </div>
         </div>
-        <label className="block text-xs text-slate-400">
-          Area
-          <select value={areaId} onChange={(e) => setAreaId(e.target.value)} className="input mt-1">
+        <div className="nc-field">
+          <label>Area</label>
+          <select value={areaId} onChange={(e) => setAreaId(e.target.value)} className="nc-input">
             <option value="">None</option>
             {areas.map((area) => (
               <option key={area.id} value={area.id}>
@@ -71,20 +65,16 @@ export function QuickCreatePopover({
               </option>
             ))}
           </select>
-        </label>
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        <div className="flex items-center justify-between pt-1">
-          <button
-            type="button"
-            className="text-sm text-slate-400 hover:text-white"
-            onClick={() => onMoreOptions(currentValues())}
-          >
+        </div>
+        {error && <div style={{ fontSize: 12, color: "var(--color-accent-300)" }}>{error}</div>}
+        <div className="nc-dialog-actions" style={{ justifyContent: "space-between", marginTop: 0 }}>
+          <button type="button" className="nc-btn" onClick={() => onMoreOptions(currentValues())}>
             More options
           </button>
           <button
             type="button"
             disabled={saving || end <= start}
-            className="btn-primary w-auto px-4 py-1.5"
+            className="nc-btn nc-btn-primary"
             onClick={async () => {
               setSaving(true);
               setError(null);

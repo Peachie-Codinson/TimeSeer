@@ -29,27 +29,20 @@ export function WorkSessionPopover({
 
   return (
     <Modal title={taskTitle} onClose={onClose}>
-      <div className="space-y-3 text-sm">
-        <p className="text-slate-300">{STATUS_LABEL[session.status]}</p>
-        <p className="text-xs text-slate-500">
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 13.5 }}>
+        <div>{STATUS_LABEL[session.status]}</div>
+        <div className="nc-card-meta">
           {new Date(session.startsAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })} –{" "}
-          {new Date(session.endsAt).toLocaleTimeString(undefined, { timeStyle: "short" })} ({session.plannedMinutes}
-          min planned)
-        </p>
+          {new Date(session.endsAt).toLocaleTimeString(undefined, { timeStyle: "short" })} ({session.plannedMinutes} min planned)
+        </div>
 
-        <div className="flex flex-wrap gap-2 border-t border-slate-800 pt-3">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, borderTop: "1px solid var(--color-divider)", paddingTop: 10 }}>
           {session.status === "planned" && (
             <>
-              <button
-                className="btn-secondary"
-                onClick={() => void run(() => startWorkSession(session.id, session.version))}
-              >
+              <button type="button" className="nc-btn nc-btn-secondary" onClick={() => void run(() => startWorkSession(session.id, session.version))}>
                 Start
               </button>
-              <button
-                className="btn-secondary"
-                onClick={() => void run(() => skipWorkSession(session.id, session.version))}
-              >
+              <button type="button" className="nc-btn nc-btn-secondary" onClick={() => void run(() => skipWorkSession(session.id, session.version))}>
                 Skip
               </button>
             </>
@@ -57,13 +50,15 @@ export function WorkSessionPopover({
           {session.status === "in_progress" && (
             <>
               <button
-                className="btn-secondary"
+                type="button"
+                className="nc-btn nc-btn-secondary"
                 onClick={() => void run(() => completeWorkSession(session.id, session.version))}
               >
                 Complete
               </button>
               <button
-                className="btn-secondary"
+                type="button"
+                className="nc-btn nc-btn-secondary"
                 onClick={() => {
                   const input = window.prompt("Minutes actually worked?", String(session.plannedMinutes));
                   const minutes = input === null ? null : Number(input);
@@ -74,10 +69,7 @@ export function WorkSessionPopover({
               >
                 Partial
               </button>
-              <button
-                className="btn-secondary"
-                onClick={() => void run(() => skipWorkSession(session.id, session.version))}
-              >
+              <button type="button" className="nc-btn nc-btn-secondary" onClick={() => void run(() => skipWorkSession(session.id, session.version))}>
                 Skip
               </button>
             </>

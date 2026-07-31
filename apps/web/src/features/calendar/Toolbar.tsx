@@ -1,3 +1,5 @@
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+
 export const VIEW_OPTIONS = [
   { key: "dayGridMonth", label: "Month" },
   { key: "timeGridWeek", label: "Week" },
@@ -33,47 +35,54 @@ export function Toolbar({
   onSuggestSchedule,
 }: ToolbarProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
-      <div className="flex items-center gap-2">
-        <button className="btn-secondary" onClick={onToday}>
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        rowGap: 8,
+        borderBottom: "1px solid var(--color-divider)",
+        padding: "8px var(--space-6)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "none" }}>
+        <button type="button" className="nc-btn nc-btn-secondary" onClick={onToday}>
           Today
         </button>
-        <button className="btn-secondary px-2" onClick={onPrev} aria-label="Previous">
+        <button type="button" className="nc-btn nc-btn-secondary" style={{ padding: "0 10px" }} onClick={onPrev} aria-label="Previous">
           ‹
         </button>
-        <button className="btn-secondary px-2" onClick={onNext} aria-label="Next">
+        <button type="button" className="nc-btn nc-btn-secondary" style={{ padding: "0 10px" }} onClick={onNext} aria-label="Next">
           ›
         </button>
-        <h2 className="ml-2 text-sm font-medium text-slate-200">{title}</h2>
+        <div style={{ marginLeft: 6, fontSize: 14, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="search"
-          placeholder="Search events..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="input w-40 py-1.5"
-        />
-        <div className="flex overflow-hidden rounded-md border border-slate-700">
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", rowGap: 8 }}>
+        <div className="nc-input" style={{ display: "flex", alignItems: "center", gap: 8, width: 160, minWidth: 100 }}>
+          <MagnifyingGlassIcon size={14} style={{ flex: "none", color: "color-mix(in srgb, var(--color-text) 55%, transparent)" }} />
+          <input
+            type="search"
+            placeholder="Search events…"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            style={{ border: "none", background: "none", outline: "none", width: "100%", color: "var(--color-text)", font: "inherit" }}
+          />
+        </div>
+        <div className="nc-seg" style={{ flex: "none" }}>
           {VIEW_OPTIONS.map((view) => (
-            <button
-              key={view.key}
-              onClick={() => onViewChange(view.key)}
-              className={`px-3 py-1.5 text-sm ${
-                currentView === view.key
-                  ? "bg-slate-100 text-slate-900"
-                  : "text-slate-300 hover:bg-slate-800"
-              }`}
-            >
+            <label key={view.key} className="nc-seg-opt" style={currentView === view.key ? { color: "var(--color-accent)" } : undefined}>
+              <input type="radio" name="calendar-view" checked={currentView === view.key} onChange={() => onViewChange(view.key)} />
               {view.label}
-            </button>
+            </label>
           ))}
         </div>
-        <button className="btn-secondary" onClick={onSuggestSchedule}>
+        <button type="button" className="nc-btn nc-btn-secondary" style={{ flex: "none" }} onClick={onSuggestSchedule}>
           Suggest schedule
         </button>
-        <button className="btn-primary w-auto px-3 py-1.5" onClick={onCreate}>
+        <button type="button" className="nc-btn nc-btn-primary" style={{ flex: "none" }} onClick={onCreate}>
           Create
         </button>
       </div>

@@ -6,6 +6,7 @@ import { createQuota, fetchQuotas, updateQuota } from "../quotas/api";
 import { PanelTaskCard } from "../tasks/PanelTaskCard";
 import { returnToActive, snoozeTask, startTask } from "../tasks/api";
 import type { Task } from "../tasks/types";
+import "../../styles/nocturne.css";
 import { fetchDashboard } from "./api";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -20,11 +21,26 @@ function todayRange() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="border-b border-slate-800 px-4 py-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
+    <div style={{ borderBottom: "1px solid var(--color-divider)", padding: "var(--space-4)" }}>
+      <div
+        style={{
+          marginBottom: 8,
+          fontSize: 11,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          color: "color-mix(in srgb, var(--color-text) 55%, transparent)",
+        }}
+      >
+        {title}
+      </div>
       {children}
     </div>
   );
+}
+
+function Empty({ children }: { children: ReactNode }) {
+  return <div style={{ fontSize: 13, color: "color-mix(in srgb, var(--color-text) 50%, transparent)" }}>{children}</div>;
 }
 
 export function TaskPanel() {
@@ -60,12 +76,12 @@ export function TaskPanel() {
   const activeNext = (tasks?.activeNext ?? []) as unknown as Task[];
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className="nc-shell" style={{ display: "flex", height: "100%", flexDirection: "column", overflowY: "auto" }}>
       <Section title="Now">
         {now.length === 0 ? (
-          <p className="text-sm text-slate-500">Nothing happening right now.</p>
+          <Empty>Nothing happening right now.</Empty>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {now.map((task) => (
               <PanelTaskCard key={task.id} task={task} />
             ))}
@@ -75,16 +91,14 @@ export function TaskPanel() {
 
       <Section title="In Progress">
         {inProgress.length === 0 ? (
-          <p className="text-sm text-slate-500">No tasks in progress.</p>
+          <Empty>No tasks in progress.</Empty>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {inProgress.map((task) => (
               <PanelTaskCard
                 key={task.id}
                 task={task}
-                actions={[
-                  { label: "Return to Active", onClick: () => returnToActive(task.id, task.version).then(refetch) },
-                ]}
+                actions={[{ label: "Return to Active", onClick: () => returnToActive(task.id, task.version).then(refetch) }]}
               />
             ))}
           </div>
@@ -93,18 +107,14 @@ export function TaskPanel() {
 
       <Section title="Urgent & Time-Gated">
         {urgent.length === 0 ? (
-          <p className="text-sm text-slate-500">Nothing urgent.</p>
+          <Empty>Nothing urgent.</Empty>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {urgent.map((task) => (
               <PanelTaskCard
                 key={task.id}
                 task={task}
-                actions={
-                  task.state === "active"
-                    ? [{ label: "Start", onClick: () => startTask(task.id, task.version).then(refetch) }]
-                    : undefined
-                }
+                actions={task.state === "active" ? [{ label: "Start", onClick: () => startTask(task.id, task.version).then(refetch) }] : undefined}
               />
             ))}
           </div>
@@ -112,12 +122,14 @@ export function TaskPanel() {
       </Section>
 
       <Section title="Active Next">
-        <div className="space-y-2" ref={draggableContainerRef}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }} ref={draggableContainerRef}>
           {activeNext.length === 0 ? (
-            <p className="text-sm text-slate-500">Nothing queued. Add a task from the board.</p>
+            <Empty>Nothing queued. Add a task from the board.</Empty>
           ) : (
             <>
-              <p className="text-[11px] text-slate-600">Drag a card onto the calendar to schedule it.</p>
+              <div style={{ fontSize: 11, color: "color-mix(in srgb, var(--color-text) 40%, transparent)" }}>
+                Drag a card onto the calendar to schedule it.
+              </div>
               {activeNext.map((task) => (
                 <PanelTaskCard
                   key={task.id}
@@ -125,10 +137,7 @@ export function TaskPanel() {
                   draggable
                   actions={[
                     { label: "Start", onClick: () => startTask(task.id, task.version).then(refetch) },
-                    {
-                      label: "Snooze 1d",
-                      onClick: () => snoozeTask(task.id, task.version, Date.now() + ONE_DAY_MS).then(refetch),
-                    },
+                    { label: "Snooze 1d", onClick: () => snoozeTask(task.id, task.version, Date.now() + ONE_DAY_MS).then(refetch) },
                   ]}
                 />
               ))}
@@ -138,7 +147,7 @@ export function TaskPanel() {
       </Section>
 
       <Section title="Quota Summary">
-        <div className="grid grid-cols-2 gap-2 text-sm">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 13 }}>
           <Stat label="Completed" value={quota?.completedMinutes ?? 0} />
           <Stat label="Scheduled" value={quota?.scheduledMinutes ?? 0} />
           <Stat label="Target" value={quota?.targetMinutes ?? 0} />
@@ -152,9 +161,9 @@ export function TaskPanel() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md bg-slate-900 p-2">
-      <p className="text-slate-500">{label}</p>
-      <p className="text-slate-200">{value}m</p>
+    <div style={{ borderRadius: "var(--radius-md)", background: "var(--color-neutral-900)", padding: 8 }}>
+      <div style={{ color: "color-mix(in srgb, var(--color-text) 55%, transparent)" }}>{label}</div>
+      <div>{value}m</div>
     </div>
   );
 }
@@ -181,25 +190,28 @@ function QuotaTargetEditor({ targetMinutes }: { targetMinutes: number }) {
 
   if (!editing) {
     return (
-      <button className="mt-2 text-[11px] text-slate-500 hover:text-slate-300" onClick={() => setEditing(true)}>
+      <button
+        type="button"
+        style={{ marginTop: 8, background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "color-mix(in srgb, var(--color-text) 50%, transparent)" }}
+        onClick={() => setEditing(true)}
+      >
         Edit daily target
       </button>
     );
   }
 
   return (
-    <div className="mt-2 flex items-center gap-2">
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="input w-20 py-1 text-xs"
-      />
-      <span className="text-xs text-slate-500">min/day</span>
-      <button className="btn-secondary px-2 py-1 text-xs" onClick={() => void save()}>
+    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+      <input type="number" value={value} onChange={(e) => setValue(e.target.value)} className="nc-input" style={{ width: 80, fontSize: 12 }} />
+      <span style={{ fontSize: 12, color: "color-mix(in srgb, var(--color-text) 55%, transparent)" }}>min/day</span>
+      <button type="button" className="nc-btn nc-btn-secondary" style={{ fontSize: 12, padding: "4px 8px" }} onClick={() => void save()}>
         Save
       </button>
-      <button className="text-xs text-slate-500 hover:text-slate-300" onClick={() => setEditing(false)}>
+      <button
+        type="button"
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "color-mix(in srgb, var(--color-text) 50%, transparent)" }}
+        onClick={() => setEditing(false)}
+      >
         Cancel
       </button>
     </div>

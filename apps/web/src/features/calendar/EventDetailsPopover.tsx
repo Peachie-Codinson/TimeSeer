@@ -29,39 +29,37 @@ export function EventDetailsPopover({
 
   return (
     <Modal title={occurrence.title} onClose={onClose}>
-      <div className="space-y-2 text-sm">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5 }}>
         {area && (
-          <p className="flex items-center gap-2 text-slate-300">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: area.color ?? "#64748b" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: area.color ?? "var(--color-neutral-600)" }} />
             {area.name}
-          </p>
+          </div>
         )}
-        <p className="text-slate-300">{formatRange()}</p>
-        {occurrence.recurring && <p className="text-xs text-slate-500">Recurring event</p>}
+        <div>{formatRange()}</div>
+        {occurrence.recurring && <div className="nc-card-meta">Recurring event</div>}
         {occurrence.locationName &&
           (occurrence.locationUrl ? (
-            <button
-              className="block text-left text-slate-300 underline decoration-slate-600 hover:text-white"
-              onClick={() => void openExternal(occurrence.locationUrl!)}
-            >
+            <a href="#" onClick={(e) => { e.preventDefault(); void openExternal(occurrence.locationUrl!); }}>
               {occurrence.locationName}
-            </button>
+            </a>
           ) : (
-            <p className="text-slate-300">{occurrence.locationName}</p>
+            <div>{occurrence.locationName}</div>
           ))}
         {occurrence.meetingUrl && (
-          <button
-            className="block text-emerald-400 hover:text-emerald-300"
-            onClick={() => void openExternal(occurrence.meetingUrl!)}
-          >
+          <a href="#" onClick={(e) => { e.preventDefault(); void openExternal(occurrence.meetingUrl!); }}>
             Join meeting
-          </button>
+          </a>
         )}
-        {occurrence.description && <p className="whitespace-pre-wrap text-slate-400">{occurrence.description}</p>}
+        {occurrence.description && (
+          <div style={{ whiteSpace: "pre-wrap", color: "color-mix(in srgb, var(--color-text) 70%, transparent)" }}>{occurrence.description}</div>
+        )}
 
-        <div className="flex items-center justify-between pt-3">
+        <div className="nc-dialog-actions" style={{ justifyContent: "space-between" }}>
           <button
-            className="text-sm text-red-400 hover:text-red-300"
+            type="button"
+            className="nc-btn"
+            style={{ color: "var(--color-accent-300)" }}
             onClick={async () => {
               const deleted = await deleteEventOrOccurrence(occurrence);
               if (deleted) onDeleted();
@@ -69,7 +67,7 @@ export function EventDetailsPopover({
           >
             Delete
           </button>
-          <button className="btn-secondary" onClick={onEdit}>
+          <button type="button" className="nc-btn nc-btn-secondary" onClick={onEdit}>
             Edit
           </button>
         </div>

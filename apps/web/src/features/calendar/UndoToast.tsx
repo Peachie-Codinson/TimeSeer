@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import "../../styles/nocturne.css";
 
 export interface ToastState {
   message: string;
@@ -15,10 +16,24 @@ export function UndoToast({ toast, onDismiss }: { toast: ToastState | null; onDi
   if (!toast) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-100 shadow-lg">
-      <span>{toast.message}</span>
+    <div
+      className="nc-shell nc-card nc-elev-lg nc-toast"
+      style={{
+        position: "fixed",
+        bottom: 24,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 50,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: "10px 16px",
+      }}
+    >
+      <span style={{ fontSize: 13 }}>{toast.message}</span>
       <button
-        className="font-medium text-emerald-400 hover:text-emerald-300"
+        type="button"
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--color-accent)", fontWeight: 600, fontSize: 13 }}
         onClick={() => {
           toast.onUndo();
           onDismiss();
@@ -26,7 +41,12 @@ export function UndoToast({ toast, onDismiss }: { toast: ToastState | null; onDi
       >
         Undo
       </button>
-      <button className="text-slate-500 hover:text-slate-300" onClick={onDismiss} aria-label="Dismiss">
+      <button
+        type="button"
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "color-mix(in srgb, var(--color-text) 50%, transparent)" }}
+        onClick={onDismiss}
+        aria-label="Dismiss"
+      >
         ×
       </button>
     </div>

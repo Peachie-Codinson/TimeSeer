@@ -57,7 +57,7 @@ function NavItem({ to, icon, label }: { to?: string; icon: ReactNode; label: str
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ children }: { children?: ReactNode }) {
   return (
     <div
       style={{
@@ -101,6 +101,12 @@ export function AppSidebar() {
           <NavItem to="/areas" icon={<FoldersIcon {...iconProps} />} label="Areas" />
           <NavItem to="/settings" icon={<GearIcon {...iconProps} />} label="Settings" />
         </div>
+        {children && (
+          <>
+            <div className="nc-hr" style={{ height: 1, background: "var(--color-divider)", margin: 0 }} />
+            {children}
+          </>
+        )}
       </div>
     </div>
   );

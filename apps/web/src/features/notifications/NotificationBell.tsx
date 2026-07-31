@@ -1,14 +1,16 @@
+import { BellIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { isTauri, sendNativeNotification } from "../../platform/tauri";
+import "../../styles/nocturne.css";
 import { type Notification as AppNotification, fetchNotifications } from "./api";
 
 const POLL_INTERVAL_MS = 60_000;
 
-const SEVERITY_DOT: Record<AppNotification["severity"], string> = {
-  info: "bg-sky-400",
-  warning: "bg-amber-400",
-  critical: "bg-red-400",
+const SEVERITY_COLOR: Record<AppNotification["severity"], string> = {
+  info: "var(--color-accent)",
+  warning: "#d9a884",
+  critical: "var(--color-accent-300)",
 };
 
 export function NotificationBell() {
@@ -53,18 +55,37 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative">
+    <div className="nc-shell" style={{ position: "relative" }}>
       <button
-        className="relative text-xs text-slate-400 hover:text-white"
+        type="button"
+        className="nc-btn nc-hover"
+        style={{ position: "relative", width: 32, padding: 0 }}
         onClick={() => {
           setOpen((v) => !v);
           requestPermission();
         }}
         aria-label="Notifications"
       >
-        Notifications
+        <BellIcon size={16} />
         {notifications.length > 0 && (
-          <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] text-white">
+          <span
+            style={{
+              position: "absolute",
+              top: 2,
+              right: 2,
+              minWidth: 14,
+              height: 14,
+              borderRadius: 7,
+              background: "var(--color-accent-300)",
+              color: "var(--color-bg)",
+              fontSize: 9,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 3px",
+            }}
+          >
             {notifications.length}
           </span>
         )}
@@ -72,20 +93,18 @@ export function NotificationBell() {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-40 mt-2 w-72 rounded-md border border-slate-800 bg-slate-900 shadow-xl">
-            <div className="max-h-96 overflow-y-auto p-2">
+          <div style={{ position: "fixed", inset: 0, zIndex: 30 }} onClick={() => setOpen(false)} />
+          <div className="nc-card nc-elev-lg" style={{ position: "absolute", right: 0, zIndex: 40, marginTop: 8, width: 288, padding: 8 }}>
+            <div style={{ maxHeight: 384, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
               {notifications.length === 0 ? (
-                <p className="p-2 text-xs text-slate-500">Nothing to see right now.</p>
+                <div style={{ padding: 8, fontSize: 12, color: "color-mix(in srgb, var(--color-text) 50%, transparent)" }}>Nothing to see right now.</div>
               ) : (
-                <ul className="space-y-1">
-                  {notifications.map((n) => (
-                    <li key={n.id} className="flex items-start gap-2 rounded p-2 text-xs hover:bg-slate-800">
-                      <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${SEVERITY_DOT[n.severity]}`} />
-                      <span className="text-slate-300">{n.message}</span>
-                    </li>
-                  ))}
-                </ul>
+                notifications.map((n) => (
+                  <div key={n.id} className="nc-hover" style={{ display: "flex", alignItems: "flex-start", gap: 8, borderRadius: "var(--radius-sm)", padding: 8, fontSize: 12 }}>
+                    <span style={{ marginTop: 4, width: 6, height: 6, flex: "none", borderRadius: "50%", background: SEVERITY_COLOR[n.severity] }} />
+                    <span>{n.message}</span>
+                  </div>
+                ))
               )}
             </div>
           </div>

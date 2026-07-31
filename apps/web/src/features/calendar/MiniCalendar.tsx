@@ -26,48 +26,58 @@ export function MiniCalendar({
   ];
 
   return (
-    <div className="rounded-md border border-slate-800 p-3 text-xs">
-      <div className="mb-2 flex items-center justify-between">
+    <div style={{ fontSize: 11.5 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <button
-          className="text-slate-400 hover:text-white"
+          type="button"
+          className="nc-hover"
+          style={{ background: "none", border: "none", cursor: "pointer", color: "color-mix(in srgb, var(--color-text) 55%, transparent)", padding: 2, borderRadius: "var(--radius-sm)" }}
           onClick={() => onSelectDate(new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1))}
           aria-label="Previous month"
         >
           ‹
         </button>
-        <span className="font-medium text-slate-200">
-          {monthStart.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-        </span>
+        <span style={{ fontWeight: 600 }}>{monthStart.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</span>
         <button
-          className="text-slate-400 hover:text-white"
+          type="button"
+          className="nc-hover"
+          style={{ background: "none", border: "none", cursor: "pointer", color: "color-mix(in srgb, var(--color-text) 55%, transparent)", padding: 2, borderRadius: "var(--radius-sm)" }}
           onClick={() => onSelectDate(new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1))}
           aria-label="Next month"
         >
           ›
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-y-1 text-center text-slate-500">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", rowGap: 4, textAlign: "center" }}>
         {WEEKDAY_LABELS.map((label, i) => (
-          <span key={i}>{label}</span>
+          <span key={i} style={{ color: "color-mix(in srgb, var(--color-text) 40%, transparent)" }}>
+            {label}
+          </span>
         ))}
-        {cells.map((date, i) => (
-          <button
-            key={i}
-            disabled={!date}
-            onClick={() => date && onSelectDate(date)}
-            className={`aspect-square rounded-full ${
-              !date
-                ? ""
-                : isSameDay(date, selectedDate)
-                  ? "bg-slate-100 text-slate-900"
-                  : isSameDay(date, today)
-                    ? "text-emerald-400"
-                    : "text-slate-300 hover:bg-slate-800"
-            }`}
-          >
-            {date?.getDate()}
-          </button>
-        ))}
+        {cells.map((date, i) => {
+          const selected = date && isSameDay(date, selectedDate);
+          const isToday = date && isSameDay(date, today);
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={!date}
+              onClick={() => date && onSelectDate(date)}
+              className={date && !selected ? "nc-hover" : undefined}
+              style={{
+                aspectRatio: "1",
+                borderRadius: "50%",
+                border: "none",
+                cursor: date ? "pointer" : "default",
+                background: selected ? "var(--color-accent)" : "transparent",
+                color: selected ? "var(--color-bg)" : isToday ? "var(--color-accent)" : "var(--color-text)",
+                fontWeight: selected || isToday ? 600 : 400,
+              }}
+            >
+              {date?.getDate()}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

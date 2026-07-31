@@ -1,6 +1,9 @@
+import { DevicesIcon, SignOutIcon } from "@phosphor-icons/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Link } from "react-router";
+import { AppSidebar } from "../../components/AppSidebar";
+import "../../styles/nocturne.css";
 import { logout } from "../auth/api";
 import { authStatusQueryKey } from "../auth/useAuthStatus";
 import { AreaList } from "../areas/AreaList";
@@ -15,49 +18,60 @@ export function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
-    <div className="grid h-screen grid-cols-[240px_1fr_360px] bg-slate-950 text-slate-100">
-      <aside className="flex flex-col gap-4 overflow-y-auto border-r border-slate-800 p-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-sm font-semibold">Planner</h1>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+    <div className="nc-shell" style={{ height: "100vh", width: "100vw", display: "flex", overflow: "hidden" }}>
+      <AppSidebar>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
+          <MiniCalendar
+            selectedDate={selectedDate}
+            onSelectDate={(date) => {
+              setSelectedDate(date);
+              calendarRef.current?.gotoDate(date);
+            }}
+          />
+          <AreaList />
+        </div>
+      </AppSidebar>
+
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div
+          style={{
+            height: 52,
+            flex: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-3)",
+            borderBottom: "1px solid var(--color-divider)",
+            padding: "0 var(--space-6)",
+          }}
+        >
+          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 500, fontSize: 15 }}>Today</div>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
             <NotificationBell />
-            <Link to="/sessions" className="hover:text-white">
-              Devices
+            <Link to="/sessions" className="nc-btn nc-hover" style={{ width: 32, padding: 0 }} aria-label="Devices">
+              <DevicesIcon size={16} />
             </Link>
             <button
-              className="hover:text-white"
+              type="button"
+              className="nc-btn nc-hover"
+              style={{ width: 32, padding: 0 }}
+              aria-label="Log out"
               onClick={async () => {
                 await logout();
                 await queryClient.invalidateQueries({ queryKey: authStatusQueryKey });
               }}
             >
-              Log out
+              <SignOutIcon size={16} />
             </button>
           </div>
         </div>
+        <main style={{ flex: 1, minHeight: 0 }}>
+          <CalendarView ref={calendarRef} onDateChange={setSelectedDate} />
+        </main>
+      </div>
 
-        <Link to="/tasks" className="btn-secondary text-center">
-          Task board
-        </Link>
-
-        <MiniCalendar
-          selectedDate={selectedDate}
-          onSelectDate={(date) => {
-            setSelectedDate(date);
-            calendarRef.current?.gotoDate(date);
-          }}
-        />
-
-        <AreaList />
-      </aside>
-
-      <main className="min-h-0">
-        <CalendarView ref={calendarRef} onDateChange={setSelectedDate} />
-      </main>
-
-      <aside className="overflow-y-auto border-l border-slate-800">
+      <div style={{ width: 340, flex: "none", borderLeft: "1px solid var(--color-divider)", overflow: "hidden" }}>
         <TaskPanel />
-      </aside>
+      </div>
     </div>
   );
 }

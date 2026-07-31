@@ -41,64 +41,67 @@ export function SchedulePreviewModal({
 
   return (
     <Modal title="Suggested schedule" onClose={onClose} wide>
-      {isLoading && <p className="text-sm text-slate-500">Calculating...</p>}
+      {isLoading && <div className="nc-card-meta">Calculating...</div>}
 
       {result && (
-        <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+        <div style={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 4, display: "flex", flexDirection: "column", gap: 16 }}>
           {result.proposals.length === 0 ? (
-            <p className="text-sm text-slate-500">Nothing to schedule in this range.</p>
+            <div className="nc-card-meta">Nothing to schedule in this range.</div>
           ) : (
-            <ul className="space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {result.proposals.map((p, i) => (
-                <li key={i} className="flex items-start gap-2 rounded-md border border-slate-800 p-2 text-sm">
-                  <input type="checkbox" checked={selected.has(i)} onChange={() => toggle(i)} className="mt-1" />
+                <div key={i} className="nc-card" style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "var(--space-3)" }}>
+                  <input type="checkbox" checked={selected.has(i)} onChange={() => toggle(i)} style={{ marginTop: 4 }} />
                   <div>
-                    <p className="text-slate-200">{label(p.taskId)}</p>
-                    <p className="text-xs text-slate-500">
+                    <div style={{ fontSize: 13.5 }}>{label(p.taskId)}</div>
+                    <div className="nc-card-meta">
                       {new Date(p.startsAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })} –{" "}
                       {new Date(p.endsAt).toLocaleTimeString(undefined, { timeStyle: "short" })}
-                    </p>
-                    <p className="text-xs text-slate-600">{p.explanation}</p>
+                    </div>
+                    <div style={{ fontSize: 11, color: "color-mix(in srgb, var(--color-text) 45%, transparent)" }}>{p.explanation}</div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
 
           {result.unscheduled.length > 0 && (
             <div>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <div className="nc-card-kicker" style={{ marginBottom: 4 }}>
                 Couldn&apos;t schedule
-              </h3>
-              <ul className="space-y-1 text-xs text-slate-500">
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {result.unscheduled.map((u) => (
-                  <li key={u.taskId}>
+                  <div key={u.taskId} className="nc-card-meta">
                     {label(u.taskId)}: {u.reason}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
           {result.risks.length > 0 && (
             <div>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-500">Risks</h3>
-              <ul className="space-y-1 text-xs text-amber-400">
+              <div className="nc-card-kicker" style={{ marginBottom: 4, color: "var(--color-accent-300)" }}>
+                Risks
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {result.risks.map((r) => (
-                  <li key={r.taskId}>
+                  <div key={r.taskId} style={{ fontSize: 11.5, color: "var(--color-accent-300)" }}>
                     {label(r.taskId)}: {r.message}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-2 border-t border-slate-800 pt-3">
-            <button className="btn-secondary" onClick={onClose}>
+          <div className="nc-dialog-actions">
+            <button type="button" className="nc-btn nc-btn-secondary" onClick={onClose}>
               Cancel
             </button>
             <button
-              className="btn-primary w-auto px-4"
+              type="button"
+              className="nc-btn nc-btn-primary"
               disabled={applying || selected.size === 0}
               onClick={async () => {
                 setApplying(true);
