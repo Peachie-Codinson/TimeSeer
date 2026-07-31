@@ -15,8 +15,17 @@ export async function fetchAreas(): Promise<Area[]> {
   return res.json();
 }
 
-export async function createArea(input: { name: string; kind: Area["kind"]; color?: string }) {
+export async function createArea(input: { name: string; kind: Area["kind"]; color?: string; icon?: string }): Promise<Area> {
   const res = await apiClient.areas.$post({ json: input });
   if (!res.ok) throw new Error("Failed to create area");
+  return res.json();
+}
+
+export async function updateArea(
+  areaId: string,
+  input: Partial<{ name: string; color: string; icon: string; active: boolean }>,
+): Promise<Area> {
+  const res = await apiClient.areas[":areaId"].$patch({ param: { areaId }, json: input });
+  if (!res.ok) throw new Error("Failed to update area");
   return res.json();
 }

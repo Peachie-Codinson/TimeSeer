@@ -101,6 +101,7 @@
 .nc-tag { display: inline-flex; align-items: center; font-size: 11px; letter-spacing: 0.02em; padding: 3px 10px; border-radius: calc(var(--radius-md) * 0.75); }
 .nc-tag-neutral { background: var(--color-neutral-800); color: var(--color-neutral-100); }
 .nc-tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+.nc-tag-accent { background: var(--color-accent-800); color: var(--color-accent-100); }
 
 /* — dialog — */
 .nc-dialog-backdrop {
