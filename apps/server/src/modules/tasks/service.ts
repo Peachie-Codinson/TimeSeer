@@ -135,6 +135,16 @@ export function getTask(taskId: string) {
   return db.select().from(tasks).where(eq(tasks.id, taskId)).get();
 }
 
+/** For the Task Detail drawer's Activity tab (spec 10.2) — every logActivity() call above. */
+export function listActivityForTask(taskId: string) {
+  return db
+    .select()
+    .from(activityLog)
+    .where(and(eq(activityLog.entityType, "task"), eq(activityLog.entityId, taskId)))
+    .orderBy(desc(activityLog.createdAt))
+    .all();
+}
+
 /**
  * Selects the dashboard's In Progress / Urgent / Active Next lists (spec 6.4). "Urgent"
  * covers overdue tasks, tasks due within the next 24h, and tasks whose preferred window

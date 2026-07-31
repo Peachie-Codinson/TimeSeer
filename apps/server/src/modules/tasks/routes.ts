@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireSession } from "../../middleware/auth.js";
+import { listSessionsForTask } from "../work-sessions/service.js";
 import {
   ConflictError,
   NotFoundError,
@@ -10,6 +11,7 @@ import {
   createTask,
   getBoard,
   getTask,
+  listActivityForTask,
   listTasks,
   moveTask,
   resolveTask,
@@ -63,6 +65,10 @@ export const tasksRoutes = new Hono()
     if (!task) throw new HTTPException(404, { message: "Task not found" });
     return c.json(task);
   })
+
+  .get("/:taskId/activity", (c) => c.json(listActivityForTask(c.req.param("taskId"))))
+
+  .get("/:taskId/sessions", (c) => c.json(listSessionsForTask(c.req.param("taskId"))))
 
   .patch("/:taskId", zValidator("json", taskUpdateSchema), (c) => {
     const { expectedVersion, ...patch } = c.req.valid("json");

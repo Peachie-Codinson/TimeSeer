@@ -1,4 +1,4 @@
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, desc, eq, gt, lt } from "drizzle-orm";
 import { db } from "../../db/connection.js";
 import { tasks, workSessions } from "../../db/schema.js";
 
@@ -64,6 +64,11 @@ export function getActiveSessionWithTask() {
       .limit(1)
       .get() ?? null
   );
+}
+
+/** For the Task Detail drawer's Calendar tab (spec 10.2: "Scheduled sessions"). */
+export function listSessionsForTask(taskId: string) {
+  return db.select().from(workSessions).where(eq(workSessions.taskId, taskId)).orderBy(desc(workSessions.startsAt)).all();
 }
 
 export function listWorkSessionsInRange(rangeStart: number, rangeEnd: number) {

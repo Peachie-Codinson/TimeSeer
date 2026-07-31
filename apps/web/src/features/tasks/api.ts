@@ -96,3 +96,32 @@ export async function unblockTask(taskId: string, expectedVersion: number): Prom
   if (!res.ok) throw new Error(await readErrorCode(res, "unblock_task_failed"));
   return res.json();
 }
+
+export interface TaskActivityEntry {
+  id: string;
+  action: string;
+  detailJson: string | null;
+  createdAt: number;
+}
+
+export async function fetchTaskActivity(taskId: string): Promise<TaskActivityEntry[]> {
+  const res = await apiClient.tasks[":taskId"].activity.$get({ param: { taskId } });
+  if (!res.ok) throw new Error("Failed to load task activity");
+  return res.json();
+}
+
+export interface TaskSession {
+  id: string;
+  taskId: string;
+  startsAt: number;
+  endsAt: number;
+  plannedMinutes: number;
+  actualMinutes: number | null;
+  status: string;
+}
+
+export async function fetchTaskSessions(taskId: string): Promise<TaskSession[]> {
+  const res = await apiClient.tasks[":taskId"].sessions.$get({ param: { taskId } });
+  if (!res.ok) throw new Error("Failed to load task sessions");
+  return res.json();
+}
