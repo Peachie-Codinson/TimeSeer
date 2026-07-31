@@ -9,6 +9,7 @@ import { useAuthStatus } from "./features/auth/useAuthStatus";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { FocusPage } from "./features/focus/FocusPage";
 import { QuotasPage } from "./features/quotas/QuotasPage";
+import { SettingsPage } from "./features/settings/SettingsPage";
 import { TaskBoardPage } from "./features/tasks/TaskBoardPage";
 
 function Centered({ children }: { children: ReactNode }) {
@@ -78,6 +79,14 @@ export function App() {
         element={
           <RequireAuth>
             <AreasPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <RequireAuth>
+            <SettingsPage />
           </RequireAuth>
         }
       />

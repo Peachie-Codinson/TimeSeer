@@ -98,7 +98,7 @@ export function AppSidebar() {
           <NavItem to="/quotas" icon={<GaugeIcon {...iconProps} />} label="Quotas" />
           <NavItem to="/archive" icon={<ArchiveIcon {...iconProps} />} label="Archive" />
           <NavItem to="/areas" icon={<FoldersIcon {...iconProps} />} label="Areas" />
-          <NavItem icon={<GearIcon {...iconProps} />} label="Settings" />
+          <NavItem to="/settings" icon={<GearIcon {...iconProps} />} label="Settings" />
         </div>
       </div>
     </div>
