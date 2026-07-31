@@ -11,6 +11,7 @@ import { FocusPage } from "./features/focus/FocusPage";
 import { QuotasPage } from "./features/quotas/QuotasPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import { TaskBoardPage } from "./features/tasks/TaskBoardPage";
+import { UpcomingPage } from "./features/upcoming/UpcomingPage";
 
 function Centered({ children }: { children: ReactNode }) {
   return (
@@ -79,6 +80,14 @@ export function App() {
         element={
           <RequireAuth>
             <AreasPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/upcoming"
+        element={
+          <RequireAuth>
+            <UpcomingPage />
           </RequireAuth>
         }
       />

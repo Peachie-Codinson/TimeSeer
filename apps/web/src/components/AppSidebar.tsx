@@ -1,5 +1,6 @@
 import {
   ArchiveIcon,
+  ArrowRightIcon,
   CalendarBlankIcon,
   CheckSquareIcon,
   FoldersIcon,
@@ -90,7 +91,7 @@ export function AppSidebar() {
           <NavItem to="/" icon={<SunIcon {...iconProps} />} label="Today" />
           <NavItem to="/" icon={<CalendarBlankIcon {...iconProps} />} label="Calendar" />
           <NavItem to="/tasks" icon={<CheckSquareIcon {...iconProps} />} label="Tasks" />
-          <NavItem icon={<span style={{ display: "inline-flex", width: 15 }} />} label="Upcoming" />
+          <NavItem to="/upcoming" icon={<ArrowRightIcon {...iconProps} />} label="Upcoming" />
           <NavItem to="/focus" icon={<TargetIcon {...iconProps} />} label="Focus" />
         </div>
         <div className="nc-hr" style={{ height: 1, background: "var(--color-divider)", margin: 0 }} />
