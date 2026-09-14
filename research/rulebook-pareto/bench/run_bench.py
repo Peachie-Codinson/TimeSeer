@@ -35,13 +35,16 @@ def rulebook_size(path):
     return int(open(path).read().split()[0])
 
 
-def run_one(graph, rules, query, alg, timeout, eps, extra):
+def run_one(graph, rules, query, alg, timeout, eps, extra, num_queries=1):
+    """The binary applies `timeout` to each query in the file and keeps going,
+    so the subprocess budget has to cover every query, not just one. A tighter
+    kill would throw away the fast queries that share the file with a slow one."""
     cmd = [BIN, "--graph", graph, "--rules", rules, "--query", query,
            "--alg", alg, "--timeout", str(timeout), "--eps", str(eps)] + extra
     t0 = time.time()
     try:
         p = subprocess.run(cmd, capture_output=True, text=True,
-                           timeout=timeout * 1.5 + 60)
+                           timeout=timeout * num_queries * 1.5 + 60)
     except subprocess.TimeoutExpired:
         return None, time.time() - t0, "killed"
     if p.returncode != 0:
@@ -139,8 +142,9 @@ def main():
                     if alg == "topolex" and args.max_ext:
                         ex += ["--max-ext", str(args.max_ext)]
 
+                    nq = sum(1 for line in open(qpath) if line.strip())
                     data, wall, err = run_one(gpath, rpath, qpath, alg,
-                                              args.timeout, eps, ex)
+                                              args.timeout, eps, ex, nq)
                     if data is None:
                         w.writerow(capped_row(name, fam, n, m, num_rules, rname,
                                               alg, eps, wall, err))
