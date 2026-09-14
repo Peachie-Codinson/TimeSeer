@@ -17,8 +17,9 @@ namespace {
 void usage() {
     std::cerr <<
         "usage: rbsearch --graph G --rules R --query Q --alg A [options]\n"
-        "  --alg      exact | rapex | rapex-nodr | topolex | peel-exact |\n"
-        "             peel-rapex | peel-only | brute\n"
+        "  --alg      exact | rapex | rapex-nodr | topolex | seed-exact |\n"
+        "             peel-exact | peel-rapex | peel-seed-exact | peel-only |\n"
+        "             brute\n"
         "  --timeout  seconds per query (default 600)\n"
         "  --eps      override every eps in the rules file with this scalar\n"
         "  --max-ext  cap on linear extensions for topolex (default 0 = all)\n"
@@ -106,6 +107,10 @@ int main(int argc, char **argv) {
             r = raPex(g, rb, s, t, eps, false, h, budget, seed);
         } else if (alg == "topolex") {
             r = topoLex(g, rb, s, t, max_ext, budget);
+        } else if (alg == "seed-exact") {
+            r = seededExact(g, rb, s, t, max_ext, budget);
+        } else if (alg == "peel-seed-exact") {
+            r = peel(g, rb, s, t, Residual::SeededExact, eps, true, budget);
         } else if (alg == "peel-exact") {
             r = peel(g, rb, s, t, Residual::Exact, eps, true, budget);
         } else if (alg == "peel-rapex") {

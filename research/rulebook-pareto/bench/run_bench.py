@@ -25,8 +25,10 @@ ALGS = [
     ("rapex-nodr", []),
     ("rapex", []),
     ("topolex", []),
+    ("seed-exact", []),
     ("peel-only", []),
     ("peel-exact", []),
+    ("peel-seed-exact", []),
     ("peel-rapex", []),
 ]
 
@@ -125,8 +127,9 @@ def main():
                     if args.only_alg and alg != args.only_alg:
                         continue
                     # eps only changes the approximate solvers; skip duplicates.
-                    if eps != eps_values[0] and alg in ("exact", "topolex",
-                                                        "peel-only", "peel-exact"):
+                    if eps != eps_values[0] and alg in (
+                            "exact", "topolex", "seed-exact", "peel-only",
+                            "peel-exact", "peel-seed-exact"):
                         continue
                     key = (fam, rname, alg, eps, num_rules)
                     if key in abandoned:

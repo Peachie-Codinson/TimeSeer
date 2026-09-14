@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BIN = os.path.join(ROOT, "bin", "rbsearch")
+BIN = os.environ.get("RBSEARCH_BIN", os.path.join(ROOT, "bin", "rbsearch"))
 
 
 def run(graph, rules, query, alg, timeout=60, eps=None, extra=()):
@@ -122,8 +122,9 @@ def main():
             if rb.n != num_rules:
                 continue
             runs = {a: run(gpath, rpath, qpath, a)
-                    for a in ("brute", "exact", "topolex", "peel-exact",
-                              "peel-rapex", "rapex", "rapex-nodr")}
+                    for a in ("brute", "exact", "topolex", "seed-exact",
+                              "peel-exact", "peel-seed-exact", "peel-rapex",
+                              "rapex", "rapex-nodr")}
             runs["rapex0"] = run(gpath, rpath, qpath, "rapex", eps=0.0)
 
             for qi in range(len(runs["brute"]["results"])):
@@ -142,10 +143,11 @@ def main():
                         f"{tag}: exact != brute  exact={sorted(got['exact'])} "
                         f"brute={sorted(truth)}")
 
-                if got["peel-exact"] != truth:
-                    failures.append(
-                        f"{tag}: peel-exact != brute  got={sorted(got['peel-exact'])} "
-                        f"brute={sorted(truth)}")
+                for a in ("peel-exact", "seed-exact", "peel-seed-exact"):
+                    if got[a] != truth:
+                        failures.append(
+                            f"{tag}: {a} != brute  got={sorted(got[a])} "
+                            f"brute={sorted(truth)}")
 
                 # topolex must be sound (subset), completeness is not claimed.
                 stats["topolex_total"] += 1

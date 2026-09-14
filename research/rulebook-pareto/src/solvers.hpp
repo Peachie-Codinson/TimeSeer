@@ -89,8 +89,17 @@ class CostSet {
 // already tied. Rule-dominance is also translation invariant (adding the same
 // edge cost to both sides preserves every componentwise comparison), so
 // pruning partial labels never discards an optimal solution.
+//
+// `seed` pre-loads the goal set with solution costs already known to be
+// achievable and rulebook-optimal (TopoLex produces exactly that, in
+// milliseconds). Pruning against them is sound: if a seed c weakly
+// rule-dominates a partial label's g, then it also weakly rule-dominates
+// g plus any suffix, because costs only grow -- a rule at which c is worse than
+// g + suffix is a rule at which c is worse than g, and the same more-important
+// rule still excuses it.
 inline Result exactFrontier(const Graph &g, const Rulebook &rb, uint32_t s,
-                            uint32_t t, const Budget &budget) {
+                            uint32_t t, const Budget &budget,
+                            const std::vector<Cost> *seed = nullptr) {
     Result res;
     res.alg = "exact";
     auto t0 = Clock::now();
@@ -111,6 +120,8 @@ inline Result exactFrontier(const Graph &g, const Rulebook &rb, uint32_t s,
 
     std::vector<std::vector<Cost>> closed(g.n);
     CostSet goal(rb);
+    if (seed)
+        for (const auto &c : *seed) goal.insert(c);
 
     Cost zero(g.num_rules, 0);
     open.push({zero, s, 0});
@@ -440,6 +451,15 @@ inline Result topoLex(Graph &g, const Rulebook &rb, uint32_t s, uint32_t t,
         }
     }
 
+    // Rules already discharged elsewhere (by peeling) are not live in `rb`, but
+    // they still occupy a slot in every cost vector. Every surviving s-t path
+    // shares the same cost for such a rule -- that is exactly what peeling
+    // established -- so its value is read back with one Dijkstra at each leaf.
+    // Leaving them at zero would emit cost vectors that no path actually has.
+    std::vector<size_t> dead;
+    for (size_t r = 0; r < rb.numRules(); ++r)
+        if (!rb.isLive(r)) dead.push_back(r);
+
     std::vector<char> placed(rb.numRules(), 0);
     Cost fixed(rb.numRules(), 0);
     CostSet found(rb);
@@ -452,7 +472,12 @@ inline Result topoLex(Graph &g, const Rulebook &rb, uint32_t s, uint32_t t,
             return;
         if (depth == N) {
             res.extensions++;
-            found.insert(fixed);
+            Cost leaf = fixed;
+            for (size_t r : dead) {
+                leaf[r] = g.dijkstra(s, r, false)[t];
+                res.dijkstras++;
+            }
+            found.insert(leaf);
             return;
         }
         for (size_t r : live) {
@@ -488,6 +513,30 @@ inline Result topoLex(Graph &g, const Rulebook &rb, uint32_t s, uint32_t t,
     return res;
 }
 
+// Seeded exact search: spend a few milliseconds on TopoLex to get a handful of
+// certified-optimal solutions, then let the exact search start with them
+// already in its goal set so it prunes from the very first expansion.
+inline Result seededExact(Graph &g, const Rulebook &rb, uint32_t s, uint32_t t,
+                          long max_extensions, const Budget &budget) {
+    Result res;
+    res.alg = "seed-exact";
+    auto t0 = Clock::now();
+
+    std::vector<char> saved = g.active;
+    Result seed = topoLex(g, rb, s, t, max_extensions, budget);
+    g.active = saved;
+
+    Result full = exactFrontier(g, rb, s, t, budget, &seed.costs);
+    res.costs = full.costs;
+    res.expansions = full.expansions;
+    res.generations = full.generations;
+    res.dijkstras = seed.dijkstras;
+    res.extensions = seed.extensions;
+    res.timed_out = seed.timed_out || full.timed_out;
+    res.runtime = std::chrono::duration<double>(Clock::now() - t0).count();
+    return res;
+}
+
 // ---------------------------------------------------------------------------
 // Peel: exact Dijkstra reduction of the globally-dominant prefix
 // ---------------------------------------------------------------------------
@@ -501,15 +550,16 @@ inline Result topoLex(Graph &g, const Rulebook &rb, uint32_t s, uint32_t t,
 //
 // What is left is an antichain-topped residual problem on a far smaller graph,
 // handed to whichever residual solver the caller picks.
-enum class Residual { Exact, RApex, None };
+enum class Residual { Exact, RApex, None, SeededExact };
 
 inline Result peel(Graph &g, const Rulebook &rb_in, uint32_t s, uint32_t t,
                    Residual residual, const Eps &eps, bool use_dr,
                    const Budget &budget) {
     Result res;
-    res.alg = residual == Residual::Exact   ? "peel-exact"
-              : residual == Residual::RApex ? "peel-rapex"
-                                            : "peel-only";
+    res.alg = residual == Residual::Exact        ? "peel-exact"
+              : residual == Residual::RApex       ? "peel-rapex"
+              : residual == Residual::SeededExact ? "peel-seed-exact"
+                                                  : "peel-only";
     auto t0 = Clock::now();
 
     Rulebook rb = rb_in;
@@ -548,6 +598,14 @@ inline Result peel(Graph &g, const Rulebook &rb_in, uint32_t s, uint32_t t,
         res.costs = sub.costs;
         res.expansions = sub.expansions;
         res.generations = sub.generations;
+        res.timed_out = sub.timed_out;
+    } else if (residual == Residual::SeededExact) {
+        Result sub = seededExact(g, rb, s, t, 0, budget);
+        res.costs = sub.costs;
+        res.expansions = sub.expansions;
+        res.generations = sub.generations;
+        res.dijkstras += sub.dijkstras;
+        res.extensions = sub.extensions;
         res.timed_out = sub.timed_out;
     } else if (residual == Residual::RApex) {
         auto h = g.idealHeuristic(t);
